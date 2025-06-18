@@ -1,5 +1,5 @@
 ﻿using Bybit.Net.Objects.Models.V5;
-using BybitWidget.Models;
+using CryptoPnLWidget.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.IO;        // <-- ДОБАВЛЕНО
 using System.Linq;
 using System.Text.Json; // <-- ДОБАВЛЕНО
 
-namespace BybitWidget
+namespace CryptoPnLWidget
 {
     public class PositionManager
     {
@@ -27,7 +27,7 @@ namespace BybitWidget
 
             // Определяем путь к файлу истории PnL
             string appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string appSpecificFolder = Path.Combine(appDataFolder, "BybitWidget"); // Та же папка, что и для API ключей
+            string appSpecificFolder = Path.Combine(appDataFolder, "CryptoPnLWidget"); // Та же папка, что и для API ключей
             Directory.CreateDirectory(appSpecificFolder); // Убедимся, что папка существует
             _pnlHistoryFilePath = Path.Combine(appSpecificFolder, PnlHistoryFileName);
 

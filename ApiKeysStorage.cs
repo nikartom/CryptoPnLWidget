@@ -4,7 +4,7 @@ using System.Security.Cryptography; // Для ProtectedData
 using System.Text; // Для Encoding
 using System.Text.Json; // Для сериализации/десериализации JSON
 
-namespace BybitWidget
+namespace CryptoPnLWidget
 {
     // Класс для представления API-ключей
     public class ApiKeys
@@ -21,7 +21,7 @@ namespace BybitWidget
 
         // Энтропия для шифрования. Должна быть уникальной для вашего приложения.
         // Используется, чтобы предотвратить расшифровку данных, зашифрованных для другого приложения.
-        private readonly byte[] _entropy = Encoding.UTF8.GetBytes("YourUniqueBybitWidgetEntropyStringHere");
+        private readonly byte[] _entropy = Encoding.UTF8.GetBytes("YourUniqueCryptoPnLWidgetEntropyStringHere");
 
         // Метод для получения полного пути к файлу с ключами
         private string GetApiKeysFilePath()
@@ -30,7 +30,7 @@ namespace BybitWidget
             string appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
             // Создаем подпапку для нашего приложения внутри AppData\Local
-            string appSpecificFolder = Path.Combine(appDataFolder, "BybitWidget"); // "BybitWidget" - это имя вашей программы
+            string appSpecificFolder = Path.Combine(appDataFolder, "CryptoPnLWidget"); // "CryptoPnLWidget" - это имя вашей программы
 
             // Если папка не существует, создаем ее
             if (!Directory.Exists(appSpecificFolder))

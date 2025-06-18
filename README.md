@@ -20,7 +20,7 @@ A Windows desktop application that provides real-time cryptocurrency trading inf
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/BybitWidget.git
+git clone https://github.com/yourusername/CryptoPnLWidget.git
 ```
 
 2. Open the solution in Visual Studio 2022 or later

@@ -1,49 +1,93 @@
 ﻿using System.Windows;
 using System.Windows.Controls; // Для PasswordBox
 
-namespace BybitWidget
+namespace CryptoPnLWidget
 {
     public partial class ApiSettingsWindow : Window
     {
-        private readonly ApiKeysStorage _apiKeysStorage; // Экземпляр нашего хранилища ключей
+        private readonly ExchangeKeysManager _keysManager;
+        private string _selectedExchange;
 
-        // Конструктор, который будет принимать экземпляр ApiKeysStorage
-        public ApiSettingsWindow(ApiKeysStorage apiKeysStorage)
+        public ApiSettingsWindow(ExchangeKeysManager keysManager)
         {
             InitializeComponent();
-            _apiKeysStorage = apiKeysStorage; // Инициализируем поле
+            _keysManager = keysManager;
+            InitializeExchanges();
+            
+            // Устанавливаем начальное значение выбранной биржи
+            if (ExchangeComboBox.SelectedItem is string selectedExchange)
+            {
+                _selectedExchange = selectedExchange;
+                var keys = _keysManager.GetKeysForExchange(selectedExchange);
+                if (keys != null)
+                {
+                    ApiKeyTextBox.Text = keys.ApiKey;
+                    ApiSecretPasswordBox.Password = keys.ApiSecret;
+                }
+            }
+        }
+
+        private void InitializeExchanges()
+        {
+            var exchanges = _keysManager.GetAvailableExchanges();
+            ExchangeComboBox.ItemsSource = exchanges;
+            ExchangeComboBox.SelectedIndex = 0;
+            ExchangeComboBox.SelectionChanged += ExchangeComboBox_SelectionChanged;
+        }
+
+        private void ExchangeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ExchangeComboBox.SelectedItem is string selectedExchange)
+            {
+                _selectedExchange = selectedExchange;
+                var keys = _keysManager.GetKeysForExchange(selectedExchange);
+                if (keys != null)
+                {
+                    ApiKeyTextBox.Text = keys.ApiKey;
+                    ApiSecretPasswordBox.Password = keys.ApiSecret;
+                }
+                else
+                {
+                    ApiKeyTextBox.Text = string.Empty;
+                    ApiSecretPasswordBox.Password = string.Empty;
+                }
+            }
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
+            if (string.IsNullOrEmpty(_selectedExchange))
+            {
+                MessageBox.Show("Пожалуйста, выберите биржу.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             string apiKey = ApiKeyTextBox.Text;
-            string apiSecret = ApiSecretPasswordBox.Password; // Получаем текст из PasswordBox
+            string apiSecret = ApiSecretPasswordBox.Password;
 
             if (!string.IsNullOrEmpty(apiKey) && !string.IsNullOrEmpty(apiSecret))
             {
                 try
                 {
-                    // Создаем объект ApiKeys и сохраняем его через ApiKeysStorage
-                    _apiKeysStorage.SaveApiKeys(new ApiKeys { ApiKey = apiKey, ApiSecret = apiSecret });
-                    DialogResult = true; // Указываем, что данные были успешно сохранены
-                    Close(); // Закрываем окно
+                    _keysManager.SaveKeysForExchange(_selectedExchange, apiKey, apiSecret);
+                    DialogResult = true;
+                    Close();
                 }
                 catch (System.Exception ex)
                 {
-                    // Обработка ошибок при сохранении
-                    System.Windows.MessageBox.Show($"Ошибка при сохранении ключей: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Ошибка при сохранении ключей: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             else
             {
-                System.Windows.MessageBox.Show("Пожалуйста, введите оба ключа.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Пожалуйста, введите оба ключа.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = false; // Указываем, что пользователь отменил ввод
-            Close(); // Закрываем окно
+            DialogResult = false;
+            Close();
         }
     }
 }

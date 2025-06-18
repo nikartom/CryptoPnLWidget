@@ -3,16 +3,13 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-	<ApplicationIcon>vdhyq-ubma4-001.ico</ApplicationIcon>
+    <ApplicationIcon>vdhyq-ubma4-001.ico</ApplicationIcon>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>CryptoPnLWidget</RootNamespace>
+    <AssemblyName>CryptoPnLWidget</AssemblyName>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="vdhyq-ubma4-001.ico" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Bybit.Net" Version="5.1.0" />
@@ -21,19 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="vdhyq-ubma4-001.ico">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Include="vdhyq-ubma4-001.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="vdhyq-ubma4-001.ico">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
+    <Folder Include="Properties\" />
   </ItemGroup>
 
 </Project>

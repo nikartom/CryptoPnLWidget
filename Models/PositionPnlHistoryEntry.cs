@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BybitWidget.Models
+namespace CryptoPnLWidget.Models
 {
     public class PositionPnlHistoryEntry
     {

@@ -4,7 +4,7 @@ using System; // Для IServiceProvider
 using System.Windows; // Для Application, StartupEventArgs, ExitEventArgs
 using Bybit.Net.Clients;
 
-namespace BybitWidget
+namespace CryptoPnLWidget
 {
     // Наследуемся от Application (как обычно)
     public partial class App : System.Windows.Application
@@ -22,10 +22,10 @@ namespace BybitWidget
                 // которые могут быть инжектированы (переданы через конструкторы).
                 .ConfigureServices((context, services) =>
                 {
-                    // Регистрируем ApiKeysStorage как синглтон.
-                    // Это означает, что будет создан только один экземпляр ApiKeysStorage
+                    // Регистрируем ExchangeKeysManager как синглтон.
+                    // Это означает, что будет создан только один экземпляр ExchangeKeysManager
                     // и он будет использоваться везде, где запрошен.
-                    services.AddSingleton<ApiKeysStorage>();
+                    services.AddSingleton<ExchangeKeysManager>();
 
                     // Регистрируем ApiSettingsWindow как транзитный (transient).
                     // Это означает, что новый экземпляр ApiSettingsWindow будет создаваться
@@ -51,6 +51,9 @@ namespace BybitWidget
         {
             // Запускаем хост. Это инициализирует все зарегистрированные сервисы.
             await _host.StartAsync();
+
+            // Инициализируем статическое свойство Services
+            Services = _host.Services;
 
             // Теперь, когда хост запущен, мы можем получить MainWindow из его сервис-провайдера.
             // GetRequiredService<T>() запрашивает экземпляр T из DI-контейнера.

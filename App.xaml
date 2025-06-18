@@ -1,7 +1,7 @@
-﻿<Application x:Class="BybitWidget.App"
+﻿<Application x:Class="CryptoPnLWidget.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:BybitWidget">
+             xmlns:local="clr-namespace:CryptoPnLWidget">
     <Application.Resources>
          
     </Application.Resources>

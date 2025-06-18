@@ -6,18 +6,18 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Forms;
-using System.Drawing;
-using System.IO;
 using System.ComponentModel;
+using System.Collections.Generic;
+using System;
+using System.Threading.Tasks;
+using System.Linq;
 using System.Reflection;
 
-namespace BybitWidget
+namespace CryptoPnLWidget
 {
     public partial class MainWindow : Window
     {
-        private readonly ApiKeysStorage _apiKeysStorage;
+        private readonly ExchangeKeysManager _keysManager;
         private readonly BybitRestClient _bybitRestClient;
         private readonly PositionManager _positionManager;
         private System.Windows.Threading.DispatcherTimer _updateTimer = new System.Windows.Threading.DispatcherTimer();
@@ -28,10 +28,10 @@ namespace BybitWidget
         // --- ДОБАВЛЕНО/ИЗМЕНЕНО: Словарь для отслеживания Grid-элементов по символу позиции ---
         private Dictionary<string, Grid> _positionGrids = new Dictionary<string, Grid>();
 
-        public MainWindow(ApiKeysStorage apiKeysStorage, BybitRestClient bybitRestClient, PositionManager positionManager)
+        public MainWindow(ExchangeKeysManager keysManager, BybitRestClient bybitRestClient, PositionManager positionManager)
         {
             InitializeComponent();
-            _apiKeysStorage = apiKeysStorage;
+            _keysManager = keysManager;
             _bybitRestClient = bybitRestClient;
             _positionManager = positionManager;
             this.Loaded += MainWindow_Loaded;
@@ -46,32 +46,23 @@ namespace BybitWidget
         {
             _trayIcon = new System.Windows.Forms.NotifyIcon();
 
-            // --- НАЧАЛО: Правильный блок для загрузки иконки в .NET 8 WPF ---
             try
             {
-                // Получаем иконку из встроенных ресурсов приложения
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                using (var stream = assembly.GetManifestResourceStream("BybitWidget.vdhyq-ubma4-001.ico"))
+                using (var stream = assembly.GetManifestResourceStream("CryptoPnLWidget.vdhyq-ubma4-001.ico"))
                 {
                     if (stream != null)
-                    {
                         _trayIcon.Icon = new System.Drawing.Icon(stream);
-                    }
                     else
-                    {
-                        throw new Exception("Не удалось получить поток ресурса иконки");
-                    }
+                        throw new Exception("Не удалось найти ресурс иконки в сборке");
                 }
             }
             catch (Exception ex)
             {
-                // Обработка любых ошибок при загрузке иконки, использование запасной
                 _trayIcon.Icon = System.Drawing.SystemIcons.Application;
                 System.Windows.MessageBox.Show($"Ошибка при загрузке иконки: {ex.Message}. Используется стандартная иконка.", "Ошибка иконки", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
-            // --- КОНЕЦ: Блок для загрузки иконки ---
-
-            _trayIcon.Text = "Bybit Widget";
+            _trayIcon.Text = "Crypto PnL Widget";
             _trayIcon.Visible = true;
 
             // Create context menu
@@ -132,9 +123,9 @@ namespace BybitWidget
 
         private void InitializeApplication()
         {
-            if (!_apiKeysStorage.AreApiKeysSet())
+            if (!_keysManager.HasKeysForExchange("Bybit"))
             {
-                var settingsWindow = App.Services.GetRequiredService<ApiSettingsWindow>();
+                var settingsWindow = new ApiSettingsWindow(_keysManager);
                 bool? dialogResult = settingsWindow.ShowDialog();
 
                 if (dialogResult == true)
@@ -155,9 +146,9 @@ namespace BybitWidget
 
         private void ConfigureBybitClientAndLoadData()
         {
-            var keys = _apiKeysStorage.LoadApiKeys();
+            var keys = _keysManager.GetKeysForExchange("Bybit");
 
-            if (string.IsNullOrEmpty(keys.ApiKey) || string.IsNullOrEmpty(keys.ApiSecret))
+            if (keys == null || string.IsNullOrEmpty(keys.ApiKey) || string.IsNullOrEmpty(keys.ApiSecret))
             {
                 System.Windows.MessageBox.Show("Ошибка при загрузке API ключей после сохранения. Проверьте сохраненные данные.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 System.Windows.Application.Current.Shutdown();
@@ -169,7 +160,7 @@ namespace BybitWidget
             // Первый, немедленный вызов при запуске
             _ = LoadBybitData();
 
-            _updateTimer.Interval = TimeSpan.FromSeconds(5); // Установлен на 5 секунд для тестирования
+            _updateTimer.Interval = TimeSpan.FromSeconds(5);
             _updateTimer.Tick += async (s, args) => await LoadBybitData();
             _updateTimer.Start();
         }
