@@ -11,7 +11,7 @@ namespace CryptoPnLWidget
     {
         // Объявляем хост, который будет управлять жизненным циклом и DI
         private readonly IHost _host;
-        public static IServiceProvider Services { get; private set; }
+        public static IServiceProvider? Services { get; private set; }
 
         // Конструктор App
         public App()

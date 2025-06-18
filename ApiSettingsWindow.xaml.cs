@@ -6,7 +6,7 @@ namespace CryptoPnLWidget
     public partial class ApiSettingsWindow : Window
     {
         private readonly ExchangeKeysManager _keysManager;
-        private string _selectedExchange;
+        private string? _selectedExchange;
 
         public ApiSettingsWindow(ExchangeKeysManager keysManager)
         {

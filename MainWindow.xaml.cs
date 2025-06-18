@@ -23,7 +23,7 @@ namespace CryptoPnLWidget
         private System.Windows.Threading.DispatcherTimer _updateTimer = new System.Windows.Threading.DispatcherTimer();
         private string _currentSortColumn = "PnL";
         private bool _isAscending = false;
-        private System.Windows.Forms.NotifyIcon _trayIcon;
+        private System.Windows.Forms.NotifyIcon? _trayIcon;
 
         // --- ДОБАВЛЕНО/ИЗМЕНЕНО: Словарь для отслеживания Grid-элементов по символу позиции ---
         private Dictionary<string, Grid> _positionGrids = new Dictionary<string, Grid>();
@@ -112,7 +112,8 @@ namespace CryptoPnLWidget
 
         protected override void OnClosing(CancelEventArgs e)
         {
-            _trayIcon.Visible = false;
+            if (_trayIcon != null)
+                _trayIcon.Visible = false;
             base.OnClosing(e);
         }
 
@@ -319,7 +320,8 @@ namespace CryptoPnLWidget
         {
             if (sender is System.Windows.Controls.Button button)
             {
-                string columnName = button.Tag.ToString();
+                // Безопасное приведение к строке с дефолтным значением
+                string columnName = button.Tag as string ?? "";
 
                 // Toggle sort direction if clicking the same column
                 if (columnName == _currentSortColumn)
@@ -351,7 +353,7 @@ namespace CryptoPnLWidget
             RealizedSortIndicator.Visibility = Visibility.Collapsed;
 
             // Show active indicator
-            TextBlock activeIndicator = null;
+            TextBlock? activeIndicator = null;
             switch (activeColumn)
             {
                 case "Symbol":
@@ -396,23 +398,23 @@ namespace CryptoPnLWidget
             var sortedTrackers = (_currentSortColumn switch
             {
                 "Symbol" => _isAscending
-                    ? openPositionTrackers.OrderBy(t => t.CurrentPosition.Symbol, StringComparer.Ordinal)
-                    : openPositionTrackers.OrderByDescending(t => t.CurrentPosition.Symbol, StringComparer.Ordinal),
+                    ? openPositionTrackers.OrderBy(t => t.CurrentPosition?.Symbol, StringComparer.Ordinal)
+                    : openPositionTrackers.OrderByDescending(t => t.CurrentPosition?.Symbol, StringComparer.Ordinal),
                 "Cost" => _isAscending
-                    ? openPositionTrackers.OrderBy(t => (t.CurrentPosition.Quantity * (t.CurrentPosition.AveragePrice ?? 0)))
-                    : openPositionTrackers.OrderByDescending(t => (t.CurrentPosition.Quantity * (t.CurrentPosition.AveragePrice ?? 0))),
+                    ? openPositionTrackers.OrderBy(t => (t.CurrentPosition?.Quantity * (t.CurrentPosition?.AveragePrice ?? 0)))
+                    : openPositionTrackers.OrderByDescending(t => (t.CurrentPosition?.Quantity * (t.CurrentPosition?.AveragePrice ?? 0))),
                 "PnL" => _isAscending
-                    ? openPositionTrackers.OrderBy(t => t.CurrentPosition.UnrealizedPnl ?? 0)
-                    : openPositionTrackers.OrderByDescending(t => t.CurrentPosition.UnrealizedPnl ?? 0),
+                    ? openPositionTrackers.OrderBy(t => t.CurrentPosition?.UnrealizedPnl ?? 0)
+                    : openPositionTrackers.OrderByDescending(t => t.CurrentPosition?.UnrealizedPnl ?? 0),
                 "Pnl1h" => _isAscending
-                    ? openPositionTrackers.OrderBy(t => t.GetPnlChange(TimeSpan.FromHours(1)) ?? 0)
-                    : openPositionTrackers.OrderByDescending(t => t.GetPnlChange(TimeSpan.FromHours(1)) ?? 0),
+                    ? openPositionTrackers.OrderBy(t => t.GetPnlChange(TimeSpan.FromHours(1), t.GetCurrentPosition()) ?? 0)
+                    : openPositionTrackers.OrderByDescending(t => t.GetPnlChange(TimeSpan.FromHours(1), t.GetCurrentPosition()) ?? 0),
                 "Pnl24h" => _isAscending
-                    ? openPositionTrackers.OrderBy(t => t.GetPnlChange(TimeSpan.FromHours(24)) ?? 0)
-                    : openPositionTrackers.OrderByDescending(t => t.GetPnlChange(TimeSpan.FromHours(24)) ?? 0),
+                    ? openPositionTrackers.OrderBy(t => t.GetPnlChange(TimeSpan.FromHours(24), t.GetCurrentPosition()) ?? 0)
+                    : openPositionTrackers.OrderByDescending(t => t.GetPnlChange(TimeSpan.FromHours(24), t.GetCurrentPosition()) ?? 0),
                 "Realized" => _isAscending
-                    ? openPositionTrackers.OrderBy(t => t.CurrentPosition.RealizedPnl ?? 0)
-                    : openPositionTrackers.OrderByDescending(t => t.CurrentPosition.RealizedPnl ?? 0),
+                    ? openPositionTrackers.OrderBy(t => t.CurrentPosition?.RealizedPnl ?? 0)
+                    : openPositionTrackers.OrderByDescending(t => t.CurrentPosition?.RealizedPnl ?? 0),
                 // ! ИСПРАВЛЕНО CS8506: Возвращаем IOrderedEnumerable для дефолтного случая !
                 _ => openPositionTrackers.OrderBy(t => 0) // Просто для того, чтобы тип был IOrderedEnumerable
             }).ToList(); // <-- ToList() здесь, чтобы получить список для UpdatePositionsPanel
@@ -443,7 +445,7 @@ namespace CryptoPnLWidget
             {
                 if (!symbolsToDisplay.Contains(symbolInUi))
                 {
-                    if (_positionGrids.TryGetValue(symbolInUi, out Grid gridToRemove))
+                    if (_positionGrids.TryGetValue(symbolInUi, out Grid? gridToRemove))
                     {
                         PositionsPanel.Children.Remove(gridToRemove);
                         symbolsToRemove.Add(symbolInUi);
@@ -461,7 +463,7 @@ namespace CryptoPnLWidget
                 var position = tracker.CurrentPosition;
                 if (position == null || string.IsNullOrEmpty(position.Symbol)) continue;
 
-                Grid positionGrid;
+                Grid? positionGrid;
                 if (!_positionGrids.TryGetValue(position.Symbol, out positionGrid))
                 {
                     positionGrid = CreatePositionGridAndChildren();
@@ -509,42 +511,42 @@ namespace CryptoPnLWidget
             if (symbolBlock != null)
             {
                 // Убираем USDT из названия символа
-                string displaySymbol = position.Symbol.Replace("USDT", "");
+                string displaySymbol = position?.Symbol?.Replace("USDT", "") ?? string.Empty;
                 symbolBlock.Text = displaySymbol;
                 symbolBlock.FontSize = 12;
                 symbolBlock.FontWeight = FontWeights.Bold;
             }
 
             string costText = "N/A";
-            if (position.AveragePrice.HasValue)
+            if (position != null && position.AveragePrice.HasValue)
             {
                 decimal totalCost = position.Quantity * position.AveragePrice.Value;
                 costText = totalCost.ToString("F2");
-            }
+            }        
             if (costBlock != null) costBlock.Text = costText;
 
-            if (pnlBlock != null)
+            if (position != null && pnlBlock != null)
             {
                 pnlBlock.Text = position.UnrealizedPnl?.ToString("F2") ?? "N/A";
                 pnlBlock.Foreground = GetPnlColor(position.UnrealizedPnl);
                 pnlBlock.FontWeight = FontWeights.Bold;
             }
 
-            decimal? pnl1hChange = tracker.GetPnlChange(TimeSpan.FromHours(1));
+            decimal? pnl1hChange = tracker.GetPnlChange(TimeSpan.FromHours(1), tracker.GetCurrentPosition());
             if (pnl1hBlock != null)
             {
                 pnl1hBlock.Text = pnl1hChange?.ToString("F2") ?? "--";
                 pnl1hBlock.Foreground = GetPnlColor(pnl1hChange);
             }
 
-            decimal? pnl24hChange = tracker.GetPnlChange(TimeSpan.FromHours(24));
+            decimal? pnl24hChange = tracker.GetPnlChange(TimeSpan.FromHours(24), tracker.GetCurrentPosition());
             if (pnl24hBlock != null)
             {
                 pnl24hBlock.Text = pnl24hChange?.ToString("F2") ?? "--";
                 pnl24hBlock.Foreground = GetPnlColor(pnl24hChange);
             }
 
-            if (realizedPnlBlock != null)
+            if (position != null && realizedPnlBlock != null)
             {
                 realizedPnlBlock.Text = position.RealizedPnl?.ToString("F2") ?? "N/A";
                 realizedPnlBlock.Foreground = GetPnlColor(position.RealizedPnl);

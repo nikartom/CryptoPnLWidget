@@ -9,6 +9,9 @@
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>CryptoPnLWidget</RootNamespace>
     <AssemblyName>CryptoPnLWidget</AssemblyName>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +23,20 @@
   <ItemGroup>
     <EmbeddedResource Include="vdhyq-ubma4-001.ico" />
     <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <NativeLibrary Remove="sni.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="sni.dll">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <NativeLibrary Include="sni.dll">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </NativeLibrary>
   </ItemGroup>
 
 </Project>

@@ -26,8 +26,8 @@ namespace CryptoPnLWidget
             _positionTrackers = new ConcurrentDictionary<string, PositionHistoryTracker>();
 
             // Определяем путь к файлу истории PnL
-            string appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string appSpecificFolder = Path.Combine(appDataFolder, "CryptoPnLWidget"); // Та же папка, что и для API ключей
+            string? appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string? appSpecificFolder = Path.Combine(appDataFolder, "CryptoPnLWidget"); // Та же папка, что и для API ключей
             Directory.CreateDirectory(appSpecificFolder); // Убедимся, что папка существует
             _pnlHistoryFilePath = Path.Combine(appSpecificFolder, PnlHistoryFileName);
 
@@ -161,7 +161,7 @@ namespace CryptoPnLWidget
         public class PositionHistoryTracker
         {
             public string Symbol { get; private set; }
-            public BybitPosition CurrentPosition { get; private set; }
+            public BybitPosition? CurrentPosition { get; private set; }
             // Поле должно быть публичным или иметь getter для сериализации, если вы решите сериализовать tracker целиком
             // Сейчас оно остается private, потому что мы сериализуем Dictionary<string, List<PositionPnlHistoryEntry>>
             // Но для CleanOldHistory() и AddPnlHistoryEntry() оно должно быть доступно
@@ -196,13 +196,18 @@ namespace CryptoPnLWidget
                 }
             }
 
-            public decimal? GetPnlChange(TimeSpan interval)
+            public BybitPosition? GetCurrentPosition()
+            {
+                return CurrentPosition;
+            }
+
+            public decimal? GetPnlChange(TimeSpan interval, BybitPosition? currentPosition)
             {
                 lock (_lock)
                 {
-                    if (_pnlHistory.Count < 2 || CurrentPosition?.UnrealizedPnl.HasValue == false)
+                    if (_pnlHistory.Count < 2 || CurrentPosition?.UnrealizedPnl is not decimal currentUnrealizedPnl)
                     {
-                        return null; // Недостаточно данных
+                        return null; // Недостаточно данных или нет значения PnL
                     }
 
                     var timeAgo = DateTime.UtcNow.Subtract(interval);
@@ -213,21 +218,20 @@ namespace CryptoPnLWidget
 
                     if (oldestEntryInInterval != null)
                     {
-                        return CurrentPosition.UnrealizedPnl.Value - oldestEntryInInterval.Pnl;
+                        return currentUnrealizedPnl - oldestEntryInInterval.Pnl;
                     }
                     else if (_pnlHistory.Any())
                     {
-                        // Если нет записи точно в интервале, но есть старые записи
-                        // Берем самую старую доступную, если она старше TimeAgo (т.е. за пределами интервала)
                         var firstEntry = _pnlHistory.First();
-                        if (firstEntry.Timestamp < timeAgo)
+                        if (firstEntry.Timestamp < timeAgo && currentPosition?.UnrealizedPnl is decimal cpUnrealizedPnl)
                         {
-                            return CurrentPosition.UnrealizedPnl.Value - firstEntry.Pnl;
+                            return cpUnrealizedPnl - firstEntry.Pnl;
                         }
                     }
                     return null;
                 }
             }
+        
         }
     }
 }

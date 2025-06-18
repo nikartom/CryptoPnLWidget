@@ -37,7 +37,7 @@ namespace CryptoPnLWidget
                    !string.IsNullOrEmpty(_exchangeKeys[exchangeName].ApiSecret);
         }
 
-        public ExchangeApiKeys GetKeysForExchange(string exchangeName)
+        public ExchangeApiKeys? GetKeysForExchange(string exchangeName)
         {
             if (_exchangeKeys.TryGetValue(exchangeName, out var keys))
             {
@@ -72,7 +72,7 @@ namespace CryptoPnLWidget
                 byte[] encryptedData = File.ReadAllBytes(_keysFilePath);
                 byte[] decryptedData = ProtectedData.Unprotect(encryptedData, _entropy, DataProtectionScope.CurrentUser);
                 string json = Encoding.UTF8.GetString(decryptedData);
-                _exchangeKeys = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, ExchangeApiKeys>>(json);
+                _exchangeKeys = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, ExchangeApiKeys>>(json) ?? new Dictionary<string, ExchangeApiKeys>();
             }
             catch (Exception ex)
             {
