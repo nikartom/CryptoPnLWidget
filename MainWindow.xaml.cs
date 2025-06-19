@@ -291,12 +291,12 @@ namespace CryptoPnLWidget
             positionGrid.Cursor = System.Windows.Input.Cursors.Hand;
 
             // Создаем TextBlock'и и присваиваем им Tag для удобства поиска
-            positionGrid.Children.Add(new TextBlock { Tag = "Symbol", Foreground = System.Windows.Media.Brushes.Black, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "Cost", Foreground = System.Windows.Media.Brushes.Black, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "PnL", Foreground = System.Windows.Media.Brushes.Black, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Symbol", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Cost", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "PnL", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
             positionGrid.Children.Add(new TextBlock { Tag = "Pnl1h", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
             positionGrid.Children.Add(new TextBlock { Tag = "Pnl24h", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "Realized", Foreground = System.Windows.Media.Brushes.Black, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Realized", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
 
             // Устанавливаем Column для каждого TextBlock
             for (int i = 0; i < positionGrid.Children.Count; i++)
@@ -515,6 +515,7 @@ namespace CryptoPnLWidget
                 symbolBlock.Text = displaySymbol;
                 symbolBlock.FontSize = 12;
                 symbolBlock.FontWeight = FontWeights.Bold;
+                symbolBlock.Foreground = System.Windows.Media.Brushes.Gray;
             }
 
             string costText = "N/A";
@@ -523,7 +524,11 @@ namespace CryptoPnLWidget
                 decimal totalCost = position.Quantity * position.AveragePrice.Value;
                 costText = totalCost.ToString("F2");
             }        
-            if (costBlock != null) costBlock.Text = costText;
+            if (costBlock != null) 
+            {
+                costBlock.Text = costText;
+                costBlock.Foreground = System.Windows.Media.Brushes.Gray;
+            }
 
             if (position != null && pnlBlock != null)
             {
@@ -564,7 +569,7 @@ namespace CryptoPnLWidget
             else if (pnlValue < 0)
                 return System.Windows.Media.Brushes.Red;   // Отрицательный PnL
             else
-                return System.Windows.Media.Brushes.Black; // Нулевой PnL
+                return System.Windows.Media.Brushes.Gray; // Нулевой PnL
         }
     }
 }
