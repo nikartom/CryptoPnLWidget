@@ -12,6 +12,8 @@ using System;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Reflection;
+using CryptoPnLWidget.API;
+using CryptoPnLWidget.API.Bybit;
 
 namespace CryptoPnLWidget
 {

@@ -6,7 +6,7 @@ using System.Text;
 using System.Linq;
 using CryptoPnLWidget.Models;
 
-namespace CryptoPnLWidget
+namespace CryptoPnLWidget.API
 {
     public class ExchangeKeysManager
     {

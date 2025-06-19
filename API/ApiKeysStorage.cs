@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.IO;
-using System.Security.Cryptography; // Для ProtectedData
-using System.Text; // Для Encoding
-using System.Text.Json; // Для сериализации/десериализации JSON
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
-namespace CryptoPnLWidget
+namespace CryptoPnLWidget.API
 {
     // Класс для представления API-ключей
     public class ApiKeys
@@ -128,4 +128,4 @@ namespace CryptoPnLWidget
             return !string.IsNullOrEmpty(keys.ApiKey) && !string.IsNullOrEmpty(keys.ApiSecret);
         }
     }
-}
+} 

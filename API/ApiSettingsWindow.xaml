@@ -1,4 +1,4 @@
-﻿<Window x:Class="CryptoPnLWidget.ApiSettingsWindow"
+<Window x:Class="CryptoPnLWidget.API.ApiSettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -33,4 +33,4 @@
             <Button x:Name="CancelButton" Content="Отмена" Width="80" Height="25" Click="CancelButton_Click"/>
         </StackPanel>
     </Grid>
-</Window>
+</Window> 

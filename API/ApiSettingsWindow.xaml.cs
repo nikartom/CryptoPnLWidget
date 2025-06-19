@@ -1,7 +1,8 @@
-﻿using System.Windows;
-using System.Windows.Controls; // Для PasswordBox
+using System.Windows;
+using System.Windows.Controls;
+using CryptoPnLWidget.API;
 
-namespace CryptoPnLWidget
+namespace CryptoPnLWidget.API
 {
     public partial class ApiSettingsWindow : Window
     {
@@ -90,4 +91,4 @@ namespace CryptoPnLWidget
             Close();
         }
     }
-}
+} 

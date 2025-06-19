@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using System; // Для IServiceProvider
 using System.Windows; // Для Application, StartupEventArgs, ExitEventArgs
 using Bybit.Net.Clients;
+using CryptoPnLWidget.API;
 
 namespace CryptoPnLWidget
 {
@@ -25,12 +26,12 @@ namespace CryptoPnLWidget
                     // Регистрируем ExchangeKeysManager как синглтон.
                     // Это означает, что будет создан только один экземпляр ExchangeKeysManager
                     // и он будет использоваться везде, где запрошен.
-                    services.AddSingleton<ExchangeKeysManager>();
+                    services.AddSingleton<CryptoPnLWidget.API.ExchangeKeysManager>();
 
                     // Регистрируем ApiSettingsWindow как транзитный (transient).
                     // Это означает, что новый экземпляр ApiSettingsWindow будет создаваться
                     // каждый раз, когда он будет запрошен из DI-контейнера.
-                    services.AddTransient<ApiSettingsWindow>();
+                    services.AddTransient<CryptoPnLWidget.API.ApiSettingsWindow>();
 
                     services.AddSingleton<PositionManager>();
 
