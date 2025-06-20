@@ -19,19 +19,22 @@ namespace CryptoPnLWidget.Services
         private readonly Dictionary<string, Grid> _positionGrids = new Dictionary<string, Grid>();
         private readonly SortingManager _sortingManager;
         private readonly PositionManager _positionManager;
+        private readonly ThemeManager _themeManager;
 
         public UIManager(
             StackPanel positionsPanel,
             TextBlock marginBalanceTextBlock,
             TextBlock availableBalanceTextBlock,
             SortingManager sortingManager,
-            PositionManager positionManager)
+            PositionManager positionManager,
+            ThemeManager themeManager)
         {
             _positionsPanel = positionsPanel;
             _marginBalanceTextBlock = marginBalanceTextBlock;
             _availableBalanceTextBlock = availableBalanceTextBlock;
             _sortingManager = sortingManager;
             _positionManager = positionManager;
+            _themeManager = themeManager;
         }
 
         public void UpdateBalanceData(BybitBalanceData? balanceData)
@@ -148,7 +151,7 @@ namespace CryptoPnLWidget.Services
                     Name = "NoPositionsMessage",
                     Text = "Нет открытых позиций.",
                     FontStyle = FontStyles.Italic,
-                    Foreground = Brushes.Gray,
+                    Foreground = _themeManager.GetFontColor(),
                     HorizontalAlignment = HorizontalAlignment.Center,
                     Margin = new Thickness(0, 20, 0, 0)
                 });
@@ -164,18 +167,18 @@ namespace CryptoPnLWidget.Services
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
-            positionGrid.Margin = UiConstants.PositionGridMargin;
+            positionGrid.Margin = new Thickness(0, 3, 0, 3);
 
             positionGrid.MouseLeftButtonDown += PositionRow_MouseLeftButtonDown;
             positionGrid.Cursor = Cursors.Hand;
 
             // Создаем TextBlock'и и присваиваем им Tag для удобства поиска
-            positionGrid.Children.Add(new TextBlock { Tag = "Symbol", Foreground = UiConstants.FontColor, HorizontalAlignment = HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "Cost", Foreground = UiConstants.FontColor, HorizontalAlignment = HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "PnL", Foreground = UiConstants.FontColor, HorizontalAlignment = HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "Pnl1h", Foreground = UiConstants.FontColor, HorizontalAlignment = HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "Pnl24h", Foreground = UiConstants.FontColor, HorizontalAlignment = HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "Realized", Foreground = UiConstants.FontColor, HorizontalAlignment = HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Symbol", Foreground = _themeManager.GetFontColor(), HorizontalAlignment = HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Cost", Foreground = _themeManager.GetFontColor(), HorizontalAlignment = HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "PnL", Foreground = _themeManager.GetFontColor(), HorizontalAlignment = HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Pnl1h", Foreground = _themeManager.GetFontColor(), HorizontalAlignment = HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Pnl24h", Foreground = _themeManager.GetFontColor(), HorizontalAlignment = HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Realized", Foreground = _themeManager.GetFontColor(), HorizontalAlignment = HorizontalAlignment.Center });
 
             // Устанавливаем Column для каждого TextBlock
             for (int i = 0; i < positionGrid.Children.Count; i++)
@@ -228,9 +231,9 @@ namespace CryptoPnLWidget.Services
                 // Убираем USDT из названия символа
                 string displaySymbol = position?.Symbol?.Replace("USDT", "") ?? string.Empty;
                 symbolBlock.Text = displaySymbol;
-                symbolBlock.FontSize = UiConstants.FontSizeSmall;
-                symbolBlock.FontWeight = UiConstants.FontWeightBold;
-                symbolBlock.Foreground = UiConstants.FontColor;
+                symbolBlock.FontSize = 12;
+                symbolBlock.FontWeight = FontWeights.Bold;
+                symbolBlock.Foreground = _themeManager.GetFontColor();
             }
 
             string costText = "N/A";
@@ -242,14 +245,14 @@ namespace CryptoPnLWidget.Services
             if (costBlock != null)
             {
                 costBlock.Text = costText;
-                costBlock.Foreground = UiConstants.FontColor;
+                costBlock.Foreground = _themeManager.GetFontColor();
             }
 
             if (position != null && pnlBlock != null)
             {
                 pnlBlock.Text = position.UnrealizedPnl?.ToString("F2") ?? "N/A";
                 pnlBlock.Foreground = GetPnlColor(position.UnrealizedPnl);
-                pnlBlock.FontWeight = UiConstants.FontWeightBold;
+                pnlBlock.FontWeight = FontWeights.Bold;
             }
 
             decimal? pnl1hChange = tracker.GetPnlChange(TimeSpan.FromHours(1), tracker.GetCurrentPosition());
@@ -276,14 +279,14 @@ namespace CryptoPnLWidget.Services
         private Brush GetPnlColor(decimal? pnlValue)
         {
             if (!pnlValue.HasValue)
-                return UiConstants.FontColor; // Цвет для "N/A" или "--"
+                return _themeManager.GetFontColor(); // Цвет для "N/A" или "--"
 
             if (pnlValue > 0)
-                return UiConstants.ForegroundGreen; // Положительный PnL
+                return _themeManager.GetGreenColor(); // Положительный PnL
             else if (pnlValue < 0)
-                return UiConstants.ForegroundRed;   // Отрицательный PnL
+                return _themeManager.GetRedColor();   // Отрицательный PnL
             else
-                return UiConstants.FontColor; // Нулевой PnL
+                return _themeManager.GetFontColor(); // Нулевой PnL
         }
     }
 } 
