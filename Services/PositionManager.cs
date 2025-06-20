@@ -1,4 +1,4 @@
-﻿using Bybit.Net.Objects.Models.V5;
+using Bybit.Net.Objects.Models.V5;
 using CryptoPnLWidget.Models;
 using System;
 using System.Collections.Concurrent;
@@ -7,7 +7,7 @@ using System.IO;        // <-- ДОБАВЛЕНО
 using System.Linq;
 using System.Text.Json; // <-- ДОБАВЛЕНО
 
-namespace CryptoPnLWidget
+namespace CryptoPnLWidget.Services
 {
     public class PositionManager
     {
@@ -234,4 +234,4 @@ namespace CryptoPnLWidget
         
         }
     }
-}
+} 

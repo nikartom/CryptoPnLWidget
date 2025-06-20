@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using CryptoPnLWidget.API;
+using CryptoPnLWidget.Services;
 
 namespace CryptoPnLWidget.API
 {

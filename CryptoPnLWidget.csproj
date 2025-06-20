@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="vdhyq-ubma4-001.ico" />
+    <Folder Include="Services\" />
     <Folder Include="Properties\" />
   </ItemGroup>
 

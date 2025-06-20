@@ -1,7 +1,4 @@
-﻿using Bybit.Net.Clients;
-using Bybit.Net.Enums;
-using CryptoExchange.Net.Authentication;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -13,14 +10,16 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Reflection;
 using CryptoPnLWidget.API;
-using CryptoPnLWidget.API.Bybit;
+using CryptoPnLWidget.Services;
+using CryptoPnLWidget.Services.Bybit;
+using System.Windows.Media;
 
 namespace CryptoPnLWidget
 {
     public partial class MainWindow : Window
     {
         private readonly ExchangeKeysManager _keysManager;
-        private readonly BybitRestClient _bybitRestClient;
+        private readonly BybitService _bybitService;
         private readonly PositionManager _positionManager;
         private System.Windows.Threading.DispatcherTimer _updateTimer = new System.Windows.Threading.DispatcherTimer();
         private string _currentSortColumn = "PnL";
@@ -30,11 +29,11 @@ namespace CryptoPnLWidget
         // --- ДОБАВЛЕНО/ИЗМЕНЕНО: Словарь для отслеживания Grid-элементов по символу позиции ---
         private Dictionary<string, Grid> _positionGrids = new Dictionary<string, Grid>();
 
-        public MainWindow(ExchangeKeysManager keysManager, BybitRestClient bybitRestClient, PositionManager positionManager)
+        public MainWindow(ExchangeKeysManager keysManager, BybitService bybitService, PositionManager positionManager)
         {
             InitializeComponent();
             _keysManager = keysManager;
-            _bybitRestClient = bybitRestClient;
+            _bybitService = bybitService;
             _positionManager = positionManager;
             this.Loaded += MainWindow_Loaded;
             // Установка начального индикатора сортировки
@@ -158,7 +157,7 @@ namespace CryptoPnLWidget
                 return;
             }
 
-            _bybitRestClient.SetApiCredentials(new ApiCredentials(keys.ApiKey, keys.ApiSecret));
+            _bybitService.SetApiCredentials(keys.ApiKey, keys.ApiSecret);
 
             // Первый, немедленный вызов при запуске
             _ = LoadBybitData();
@@ -172,22 +171,19 @@ namespace CryptoPnLWidget
         {
             try
             {
-                var walletBalancesResponse = await _bybitRestClient.V5Api.Account.GetBalancesAsync(AccountType.Unified);
+                var result = await _bybitService.LoadBybitDataAsync();
 
-                if (walletBalancesResponse.Success)
+                if (result.Success)
                 {
-                    var unifiedAccountBalance = walletBalancesResponse.Data.List.FirstOrDefault();
-
-                    if (unifiedAccountBalance != null)
+                    // Обновляем балансы
+                    if (result.BalanceData != null)
                     {
-                        var usdtAsset = unifiedAccountBalance.Assets.FirstOrDefault(a => a.Asset == "USDT");
-
-                        if (usdtAsset != null)
+                        if (result.BalanceData.HasUsdtAsset)
                         {
                             if (MarginBalanceTextBlock != null)
-                                MarginBalanceTextBlock.Text = unifiedAccountBalance.TotalMarginBalance?.ToString("F2") + " USDT";
+                                MarginBalanceTextBlock.Text = result.BalanceData.TotalMarginBalance?.ToString("F2") + " USDT";
                             if (AvailableBalanceTextBlock != null)
-                                AvailableBalanceTextBlock.Text = (usdtAsset.UsdValue - (usdtAsset.TotalOrderInitialMargin + usdtAsset.TotalPositionInitialMargin))?.ToString("F2") + " USD";
+                                AvailableBalanceTextBlock.Text = result.BalanceData.AvailableBalance?.ToString("F2") + " USD";
                         }
                         else
                         {
@@ -200,29 +196,25 @@ namespace CryptoPnLWidget
                         if (MarginBalanceTextBlock != null) MarginBalanceTextBlock.Text = "Баланс Unified Account не найден.";
                         if (AvailableBalanceTextBlock != null) AvailableBalanceTextBlock.Text = "";
                     }
-                }
-                else
-                {
-                    if (MarginBalanceTextBlock != null) MarginBalanceTextBlock.Text = $"Ошибка баланса: {walletBalancesResponse.Error?.Message}";
-                    if (AvailableBalanceTextBlock != null) AvailableBalanceTextBlock.Text = "";
-                }
 
-                var positionsResponse = await _bybitRestClient.V5Api.Trading.GetPositionsAsync(category: Category.Linear, settleAsset: "USDT");
-
-                if (positionsResponse.Success)
-                {
-                    _positionManager.UpdatePositions(positionsResponse.Data.List);
-
-                    Dispatcher.Invoke(() =>
+                    // Обновляем позиции
+                    if (result.Positions != null)
                     {
-                        SortAndUpdatePositions();
-                    });
+                        _positionManager.UpdatePositions(result.Positions);
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            SortAndUpdatePositions();
+                        });
+                    }
                 }
                 else
                 {
                     Dispatcher.Invoke(() =>
                     {
-                        ClearPositionsPanelAndShowMessage($"Ошибка позиций: {positionsResponse.Error?.Message}", System.Windows.Media.Brushes.Red);
+                        if (MarginBalanceTextBlock != null) MarginBalanceTextBlock.Text = $"Ошибка: {result.ErrorMessage}";
+                        if (AvailableBalanceTextBlock != null) AvailableBalanceTextBlock.Text = "";
+                        ClearPositionsPanelAndShowMessage($"Ошибка: {result.ErrorMessage}", System.Windows.Media.Brushes.Red);
                     });
                 }
             }
@@ -238,7 +230,7 @@ namespace CryptoPnLWidget
         }
 
         // --- ДОБАВЛЕНО: Вспомогательный метод для очистки панели и вывода сообщения ---
-        private void ClearPositionsPanelAndShowMessage(string message, System.Windows.Media.Brush color)
+        private void ClearPositionsPanelAndShowMessage(string message, Brush color)
         {
             PositionsPanel.Children.Clear();
             _positionGrids.Clear(); // Важно очистить словарь отслеживаемых Grid
@@ -287,18 +279,18 @@ namespace CryptoPnLWidget
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
-            positionGrid.Margin = new Thickness(0, 3, 0, 3);
+            positionGrid.Margin = UiConstants.PositionGridMargin;
 
             positionGrid.MouseLeftButtonDown += PositionRow_MouseLeftButtonDown;
             positionGrid.Cursor = System.Windows.Input.Cursors.Hand;
 
             // Создаем TextBlock'и и присваиваем им Tag для удобства поиска
-            positionGrid.Children.Add(new TextBlock { Tag = "Symbol", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "Cost", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "PnL", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "Pnl1h", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "Pnl24h", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
-            positionGrid.Children.Add(new TextBlock { Tag = "Realized", Foreground = System.Windows.Media.Brushes.Gray, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Symbol", Foreground = UiConstants.FontColor, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Cost", Foreground = UiConstants.FontColor, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "PnL", Foreground = UiConstants.FontColor, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Pnl1h", Foreground = UiConstants.FontColor, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Pnl24h", Foreground = UiConstants.FontColor, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
+            positionGrid.Children.Add(new TextBlock { Tag = "Realized", Foreground = UiConstants.FontColor, HorizontalAlignment = System.Windows.HorizontalAlignment.Center });
 
             // Устанавливаем Column для каждого TextBlock
             for (int i = 0; i < positionGrid.Children.Count; i++)
@@ -381,7 +373,7 @@ namespace CryptoPnLWidget
             if (activeIndicator != null)
             {
                 activeIndicator.Visibility = Visibility.Visible;
-                activeIndicator.Text = _isAscending ? "▼" : "▲";
+                activeIndicator.Text = _isAscending ? "▲" : "▼";
             }
         }
 
@@ -515,9 +507,9 @@ namespace CryptoPnLWidget
                 // Убираем USDT из названия символа
                 string displaySymbol = position?.Symbol?.Replace("USDT", "") ?? string.Empty;
                 symbolBlock.Text = displaySymbol;
-                symbolBlock.FontSize = 12;
-                symbolBlock.FontWeight = FontWeights.Bold;
-                symbolBlock.Foreground = System.Windows.Media.Brushes.Gray;
+                symbolBlock.FontSize = UiConstants.FontSizeSmall;
+                symbolBlock.FontWeight = UiConstants.FontWeightBold;
+                symbolBlock.Foreground = UiConstants.FontColor;
             }
 
             string costText = "N/A";
@@ -529,14 +521,14 @@ namespace CryptoPnLWidget
             if (costBlock != null) 
             {
                 costBlock.Text = costText;
-                costBlock.Foreground = System.Windows.Media.Brushes.Gray;
+                costBlock.Foreground = UiConstants.FontColor;
             }
 
             if (position != null && pnlBlock != null)
             {
                 pnlBlock.Text = position.UnrealizedPnl?.ToString("F2") ?? "N/A";
                 pnlBlock.Foreground = GetPnlColor(position.UnrealizedPnl);
-                pnlBlock.FontWeight = FontWeights.Bold;
+                pnlBlock.FontWeight = UiConstants.FontWeightBold;
             }
 
             decimal? pnl1hChange = tracker.GetPnlChange(TimeSpan.FromHours(1), tracker.GetCurrentPosition());
@@ -561,17 +553,17 @@ namespace CryptoPnLWidget
         }
 
         // --- ДОБАВЛЕНО: Вспомогательный метод для определения цвета PnL ---
-        private System.Windows.Media.Brush GetPnlColor(decimal? pnlValue)
+        private Brush GetPnlColor(decimal? pnlValue)
         {
             if (!pnlValue.HasValue)
-                return System.Windows.Media.Brushes.Gray; // Цвет для "N/A" или "--"
+                return UiConstants.FontColor; // Цвет для "N/A" или "--"
 
             if (pnlValue > 0)
-                return System.Windows.Media.Brushes.Green; // Положительный PnL
+                return UiConstants.ForegroundGreen; // Положительный PnL
             else if (pnlValue < 0)
-                return System.Windows.Media.Brushes.Red;   // Отрицательный PnL
+                return UiConstants.ForegroundRed;   // Отрицательный PnL
             else
-                return System.Windows.Media.Brushes.Gray; // Нулевой PnL
+                return UiConstants.FontColor; // Нулевой PnL
         }
     }
 }

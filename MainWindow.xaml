@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Crypto PnL Widget" Height="450" Width="300"
+        Title="Crypto PnL Widget" Height="450" Width="350"
         MinWidth="300"
         SizeToContent="Height"
         WindowStyle="None"
@@ -14,6 +14,7 @@
         ShowInTaskbar="False"
         Topmost="True"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
+    
     <Border CornerRadius="10" Background="#80000000" BorderBrush="DarkGray" BorderThickness="1">
         <StackPanel Margin="15">
             <Grid Margin="0,0,0,15">
@@ -23,13 +24,13 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" HorizontalAlignment="Left" Margin="0,0,0,0">
-                    <TextBlock Text="Баланс маржи:" FontWeight="Bold" FontSize="14" Foreground="Gray"/>
-                    <TextBlock x:Name="MarginBalanceTextBlock" Text="Загрузка..." FontSize="20" FontWeight="Bold" Margin="0,5,0,0" Foreground="Gray"/>
+                    <TextBlock Text="Баланс маржи:" FontWeight="Bold" FontSize="14" Foreground="{StaticResource FontColor}"/>
+                    <TextBlock x:Name="MarginBalanceTextBlock" Text="Загрузка..." FontSize="20" FontWeight="Bold" Margin="0,5,0,0" Foreground="{StaticResource FontColor}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,0,0">
-                    <TextBlock Text="Доступный баланс:" FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" Foreground="Gray"/>
-                    <TextBlock x:Name="AvailableBalanceTextBlock" Text="Загрузка..." FontSize="20" HorizontalAlignment="Right" Margin="0,5,0,0" Foreground="Gray"/>
+                    <TextBlock Text="Доступный баланс:" FontWeight="Bold" FontSize="14" HorizontalAlignment="Right" Foreground="{StaticResource FontColor}"/>
+                    <TextBlock x:Name="AvailableBalanceTextBlock" Text="Загрузка..." FontSize="20" HorizontalAlignment="Right" Margin="0,5,0,0" Foreground="{StaticResource FontColor}"/>
                 </StackPanel>
             </Grid>
             <Grid Margin="0,10,0,5">
@@ -43,43 +44,43 @@
                 </Grid.ColumnDefinitions>
                 <Button x:Name="SymbolSortButton" Grid.Column="0" Click="ColumnHeader_Click" Tag="Symbol" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Background="Transparent" BorderThickness="0">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Символ" FontWeight="Bold" Foreground="Gray"/>
-                        <TextBlock x:Name="SymbolSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="Gray" Visibility="Collapsed"/>
+                        <TextBlock Text="Символ" FontWeight="Bold" Foreground="{StaticResource FontColor}"/>
+                        <TextBlock x:Name="SymbolSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="{StaticResource FontColor}" Visibility="Collapsed"/>
                        
                     </StackPanel>
                 </Button>
                 <Button x:Name="CostSortButton" Grid.Column="1" Click="ColumnHeader_Click" Tag="Cost" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Background="Transparent" BorderThickness="0">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Объем" FontWeight="Bold" Foreground="Gray"/>
-                        <TextBlock x:Name="CostSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="Gray" Visibility="Collapsed"/>
+                        <TextBlock Text="Объем" FontWeight="Bold" Foreground="{StaticResource FontColor}"/>
+                        <TextBlock x:Name="CostSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="{StaticResource FontColor}" Visibility="Collapsed"/>
                         
                     </StackPanel>
                 </Button>
                 <Button x:Name="PnlSortButton" Grid.Column="2" Click="ColumnHeader_Click" Tag="PnL" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Background="Transparent" BorderThickness="0">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="PnL" FontWeight="Bold" Foreground="Gray"/>
-                        <TextBlock x:Name="PnlSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="Gray" Visibility="Collapsed"/>
+                        <TextBlock Text="PnL" FontWeight="Bold" Foreground="{StaticResource FontColor}"/>
+                        <TextBlock x:Name="PnlSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="{StaticResource FontColor}" Visibility="Collapsed"/>
                         
                     </StackPanel>
                 </Button>
                 <Button x:Name="Pnl1hSortButton" Grid.Column="3" Click="ColumnHeader_Click" Tag="Pnl1h" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Background="Transparent" BorderThickness="0">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="1h" FontWeight="Bold" Foreground="Gray"/>
-                        <TextBlock x:Name="Pnl1hSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="Gray" Visibility="Collapsed"/>
+                        <TextBlock Text="1h" FontWeight="Bold" Foreground="{StaticResource FontColor}"/>
+                        <TextBlock x:Name="Pnl1hSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="{StaticResource FontColor}" Visibility="Collapsed"/>
                         
                     </StackPanel>
                 </Button>
                 <Button x:Name="Pnl24hSortButton" Grid.Column="4" Click="ColumnHeader_Click" Tag="Pnl24h" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Background="Transparent" BorderThickness="0">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="24h" FontWeight="Bold" Foreground="Gray"/>
-                        <TextBlock x:Name="Pnl24hSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="Gray" Visibility="Collapsed"/>
+                        <TextBlock Text="24h" FontWeight="Bold" Foreground="{StaticResource FontColor}"/>
+                        <TextBlock x:Name="Pnl24hSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="{StaticResource FontColor}" Visibility="Collapsed"/>
                         
                     </StackPanel>
                 </Button>
                 <Button x:Name="RealizedSortButton" Grid.Column="5" Click="ColumnHeader_Click" Tag="Realized" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Background="Transparent" BorderThickness="0">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Фикс" FontWeight="Bold" Foreground="Gray"/>
-                        <TextBlock x:Name="RealizedSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="Gray" Visibility="Collapsed"/>
+                        <TextBlock Text="Фикс" FontWeight="Bold" Foreground="{StaticResource FontColor}"/>
+                        <TextBlock x:Name="RealizedSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="{StaticResource FontColor}" Visibility="Collapsed"/>
                         
                     </StackPanel>
                 </Button>

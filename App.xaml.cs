@@ -4,6 +4,8 @@ using System; // Для IServiceProvider
 using System.Windows; // Для Application, StartupEventArgs, ExitEventArgs
 using Bybit.Net.Clients;
 using CryptoPnLWidget.API;
+using CryptoPnLWidget.Services;
+using CryptoPnLWidget.Services.Bybit;
 
 namespace CryptoPnLWidget
 {
@@ -26,23 +28,25 @@ namespace CryptoPnLWidget
                     // Регистрируем ExchangeKeysManager как синглтон.
                     // Это означает, что будет создан только один экземпляр ExchangeKeysManager
                     // и он будет использоваться везде, где запрошен.
-                    services.AddSingleton<CryptoPnLWidget.API.ExchangeKeysManager>();
+                    services.AddSingleton<CryptoPnLWidget.Services.ExchangeKeysManager>();
 
                     // Регистрируем ApiSettingsWindow как транзитный (transient).
                     // Это означает, что новый экземпляр ApiSettingsWindow будет создаваться
                     // каждый раз, когда он будет запрошен из DI-контейнера.
                     services.AddTransient<CryptoPnLWidget.API.ApiSettingsWindow>();
 
-                    services.AddSingleton<PositionManager>();
+                    services.AddSingleton<CryptoPnLWidget.Services.PositionManager>();
+
+                    // Регистрируем BybitRestClient как синглтон
+                    services.AddSingleton<BybitRestClient>();
+
+                    // Регистрируем BybitService как синглтон
+                    services.AddSingleton<CryptoPnLWidget.Services.Bybit.BybitService>(provider => 
+                        new CryptoPnLWidget.Services.Bybit.BybitService(provider.GetRequiredService<BybitRestClient>()));
 
                     // Регистрируем главное окно (MainWindow) как синглтон.
                     // Это означает, что MainWindow будет создан один раз.
                     services.AddSingleton<MainWindow>();
-
-                    // ВНИМАНИЕ: Здесь вы можете зарегистрировать другие сервисы или классы,
-                    // которые будут использоваться в вашем приложении.
-                    // Например, BybitRestClient (клиент Bybit API) будет зарегистрирован позже.
-                    services.AddSingleton(provider => new BybitRestClient());
                 })
                 .Build(); // Строим хост
         }
@@ -72,7 +76,7 @@ namespace CryptoPnLWidget
         {
             // Перед остановкой хоста, сохраняем историю PnL
             // Получаем PositionManager из сервисов и вызываем SaveHistory
-            var positionManager = _host.Services.GetService<PositionManager>();
+            var positionManager = _host.Services.GetService<CryptoPnLWidget.Services.PositionManager>();
             if (positionManager != null)
             {
                 positionManager.SaveHistory(); // <--- ДОБАВЛЕНО
