@@ -37,6 +37,9 @@ namespace CryptoPnLWidget
 
                     services.AddSingleton<CryptoPnLWidget.Services.PositionManager>();
 
+                    // Регистрируем ThemeManager как синглтон
+                    services.AddSingleton<CryptoPnLWidget.Services.ThemeManager>();
+
                     // Регистрируем BybitRestClient как синглтон
                     services.AddSingleton<BybitRestClient>();
 
@@ -46,7 +49,12 @@ namespace CryptoPnLWidget
 
                     // Регистрируем главное окно (MainWindow) как синглтон.
                     // Это означает, что MainWindow будет создан один раз.
-                    services.AddSingleton<MainWindow>();
+                    services.AddSingleton<MainWindow>(provider => 
+                        new MainWindow(
+                            provider.GetRequiredService<CryptoPnLWidget.Services.ExchangeKeysManager>(),
+                            provider.GetRequiredService<CryptoPnLWidget.Services.Bybit.BybitService>(),
+                            provider.GetRequiredService<CryptoPnLWidget.Services.PositionManager>(),
+                            provider.GetRequiredService<CryptoPnLWidget.Services.ThemeManager>()));
                 })
                 .Build(); // Строим хост
         }

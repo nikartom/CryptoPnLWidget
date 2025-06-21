@@ -19,14 +19,15 @@ namespace CryptoPnLWidget
         public MainWindow(
             CryptoPnLWidget.Services.ExchangeKeysManager exchangeKeysManager,
             CryptoPnLWidget.Services.Bybit.BybitService bybitService,
-            CryptoPnLWidget.Services.PositionManager positionManager)
+            CryptoPnLWidget.Services.PositionManager positionManager,
+            CryptoPnLWidget.Services.ThemeManager themeManager)
         {
             InitializeComponent();
             
             // Создаем сервисы после инициализации компонентов
             _sortingManager = new SortingManager();
-            _themeManager = new ThemeManager();
-            _trayIconManager = new TrayIconManager(this);
+            _themeManager = themeManager;
+            _trayIconManager = new TrayIconManager(this, _themeManager);
             _uiManager = new UIManager(PositionsPanel, MarginBalanceTextBlock, AvailableBalanceTextBlock, ConnectionStatusTextBlock, _sortingManager, positionManager, _themeManager);
             _dataManager = new DataManager(exchangeKeysManager, bybitService, positionManager, OnDataUpdated, OnError);
 
@@ -131,6 +132,13 @@ namespace CryptoPnLWidget
             AvailableBalanceTextBlock.Foreground = _themeManager.GetFontColor();
             ConnectionStatusTextBlock.Foreground = _themeManager.GetFontColor();
 
+            // Обновляем размеры шрифтов
+            MarginBalanceTextBlock.FontSize = UiConstants.FontSizeLarge;
+            AvailableBalanceTextBlock.FontSize = UiConstants.FontSizeLarge;
+            MarginBalanceLabel.FontSize = UiConstants.FontSizeMedium;
+            AvailableBalanceLabel.FontSize = UiConstants.FontSizeMedium;
+            ConnectionStatusTextBlock.FontSize = UiConstants.FontSizeSmall;
+
             // Обновляем кнопки сортировки
             SymbolSortText.Foreground = _themeManager.GetFontColor();
             CostSortText.Foreground = _themeManager.GetFontColor();
@@ -138,6 +146,14 @@ namespace CryptoPnLWidget
             Pnl1hSortText.Foreground = _themeManager.GetFontColor();
             Pnl24hSortText.Foreground = _themeManager.GetFontColor();
             RealizedSortText.Foreground = _themeManager.GetFontColor();
+
+            // Обновляем размеры шрифтов кнопок сортировки
+            SymbolSortText.FontSize = UiConstants.FontSizeMedium;
+            CostSortText.FontSize = UiConstants.FontSizeMedium;
+            PnlSortText.FontSize = UiConstants.FontSizeMedium;
+            Pnl1hSortText.FontSize = UiConstants.FontSizeMedium;
+            Pnl24hSortText.FontSize = UiConstants.FontSizeMedium;
+            RealizedSortText.FontSize = UiConstants.FontSizeMedium;
 
             // Обновляем индикаторы сортировки
             SymbolSortIndicator.Foreground = _themeManager.GetFontColor();

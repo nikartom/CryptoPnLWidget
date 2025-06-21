@@ -8,11 +8,6 @@ namespace CryptoPnLWidget
     {
         private static ThemeManager? _themeManager;
 
-        // Font sizes
-        public const double FontSizeSmall = 12;
-        public const double FontSizeMedium = 14;
-        public const double FontSizeLarge = 20;
-
         // Font weights
         public static readonly FontWeight FontWeightNormal = FontWeights.Normal;
         public static readonly FontWeight FontWeightBold = FontWeights.Bold;
@@ -27,7 +22,12 @@ namespace CryptoPnLWidget
             _themeManager = themeManager;
         }
 
-        // Colors - теперь динамические
+        // Font sizes - теперь динамические
+        public static double FontSizeSmall => _themeManager?.GetContentFontSize() ?? 12;
+        public static double FontSizeMedium => _themeManager?.GetHeaderFontSize() ?? 14;
+        public static double FontSizeLarge => _themeManager?.GetBalanceFontSize() ?? 20;
+
+        // Colors - динамические
         public static Brush FontColor => _themeManager?.GetFontColor() ?? Brushes.White;
         public static Brush ForegroundGreen => _themeManager?.GetGreenColor() ?? Brushes.Green;
         public static Brush ForegroundRed => _themeManager?.GetRedColor() ?? Brushes.Red;

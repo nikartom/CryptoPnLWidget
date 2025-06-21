@@ -9,10 +9,12 @@ namespace CryptoPnLWidget.Services
     {
         private NotifyIcon? _trayIcon;
         private readonly Window _mainWindow;
+        private readonly CryptoPnLWidget.Services.ThemeManager _themeManager;
 
-        public TrayIconManager(Window mainWindow)
+        public TrayIconManager(Window mainWindow, CryptoPnLWidget.Services.ThemeManager themeManager)
         {
             _mainWindow = mainWindow;
+            _themeManager = themeManager;
             InitializeTrayIcon();
         }
 
@@ -47,7 +49,7 @@ namespace CryptoPnLWidget.Services
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    var settingsWindow = new SettingsWindow();
+                    var settingsWindow = new SettingsWindow(_themeManager);
                     settingsWindow.Owner = _mainWindow;
                     settingsWindow.ShowDialog();
                 });

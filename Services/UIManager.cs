@@ -304,7 +304,7 @@ namespace CryptoPnLWidget.Services
                 // Убираем USDT из названия символа
                 string displaySymbol = position?.Symbol?.Replace("USDT", "") ?? string.Empty;
                 symbolBlock.Text = displaySymbol;
-                symbolBlock.FontSize = 12;
+                symbolBlock.FontSize = _themeManager.GetContentFontSize();
                 symbolBlock.FontWeight = FontWeights.Bold;
                 symbolBlock.Foreground = _themeManager.GetFontColor();
             }
@@ -318,6 +318,7 @@ namespace CryptoPnLWidget.Services
             if (costBlock != null)
             {
                 costBlock.Text = costText;
+                costBlock.FontSize = _themeManager.GetContentFontSize();
                 costBlock.Foreground = _themeManager.GetFontColor();
             }
 
@@ -326,26 +327,30 @@ namespace CryptoPnLWidget.Services
                 pnlBlock.Text = position.UnrealizedPnl?.ToString("F2") ?? "N/A";
                 pnlBlock.Foreground = GetPnlColor(position.UnrealizedPnl);
                 pnlBlock.FontWeight = FontWeights.Bold;
+                pnlBlock.FontSize = _themeManager.GetContentFontSize();
             }
 
-            decimal? pnl1hChange = tracker.GetPnlChange(TimeSpan.FromHours(1), tracker.GetCurrentPosition());
             if (pnl1hBlock != null)
             {
-                pnl1hBlock.Text = pnl1hChange?.ToString("F2") ?? "--";
+                decimal? pnl1hChange = tracker.GetPnlChange(TimeSpan.FromHours(1), tracker.GetCurrentPosition());
+                pnl1hBlock.Text = pnl1hChange?.ToString("F2") ?? "N/A";
                 pnl1hBlock.Foreground = GetPnlColor(pnl1hChange);
+                pnl1hBlock.FontSize = _themeManager.GetContentFontSize();
             }
 
-            decimal? pnl24hChange = tracker.GetPnlChange(TimeSpan.FromHours(24), tracker.GetCurrentPosition());
             if (pnl24hBlock != null)
             {
-                pnl24hBlock.Text = pnl24hChange?.ToString("F2") ?? "--";
+                decimal? pnl24hChange = tracker.GetPnlChange(TimeSpan.FromHours(24), tracker.GetCurrentPosition());
+                pnl24hBlock.Text = pnl24hChange?.ToString("F2") ?? "N/A";
                 pnl24hBlock.Foreground = GetPnlColor(pnl24hChange);
+                pnl24hBlock.FontSize = _themeManager.GetContentFontSize();
             }
 
-            if (position != null && realizedPnlBlock != null)
+            if (realizedPnlBlock != null)
             {
-                realizedPnlBlock.Text = position.RealizedPnl?.ToString("F2") ?? "N/A";
-                realizedPnlBlock.Foreground = GetPnlColor(position.RealizedPnl);
+                realizedPnlBlock.Text = position?.RealizedPnl?.ToString("F2") ?? "N/A";
+                realizedPnlBlock.Foreground = GetPnlColor(position?.RealizedPnl);
+                realizedPnlBlock.FontSize = _themeManager.GetContentFontSize();
             }
         }
 

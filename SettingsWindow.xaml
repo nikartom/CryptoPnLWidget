@@ -1,7 +1,7 @@
 <Window x:Class="CryptoPnLWidget.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Настройки" Height="400" Width="600" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+        Title="Настройки" Height="400" Width="600" WindowStartupLocation="CenterOwner" ResizeMode="CanResize">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150"/>
