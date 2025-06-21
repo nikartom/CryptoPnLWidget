@@ -74,5 +74,12 @@ namespace CryptoPnLWidget.Services
                 ? Brushes.Yellow 
                 : Brushes.Orange;
         }
+
+        public Brush GetErrorColor()
+        {
+            return _currentTheme == Theme.Dark
+                ? Brushes.Red
+                : Brushes.DarkRed;
+        }
     }
 } 

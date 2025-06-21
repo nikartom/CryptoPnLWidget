@@ -15,6 +15,7 @@ namespace CryptoPnLWidget.Services
         private readonly DispatcherTimer _updateTimer;
         private readonly Action<BybitDataResult> _onDataUpdated;
         private readonly Action<string> _onError;
+        private BybitBalanceData? _lastSuccessfulBalanceData; // Храним последние успешные данные баланса
 
         public DataManager(
             ExchangeKeysManager keysManager, 
@@ -81,6 +82,12 @@ namespace CryptoPnLWidget.Services
 
                 if (result.Success)
                 {
+                    // Сохраняем успешные данные баланса
+                    if (result.BalanceData != null)
+                    {
+                        _lastSuccessfulBalanceData = result.BalanceData;
+                    }
+
                     // Обновляем позиции
                     if (result.Positions != null)
                     {
@@ -91,13 +98,58 @@ namespace CryptoPnLWidget.Services
                 }
                 else
                 {
-                    _onError($"Ошибка: {result.ErrorMessage}");
+                    // Проверяем, является ли это сетевой ошибкой
+                    if (IsNetworkError(result.ErrorMessage))
+                    {
+                        // Для сетевых ошибок показываем последние успешные данные баланса
+                        _onDataUpdated(new BybitDataResult
+                        {
+                            Success = false,
+                            BalanceData = _lastSuccessfulBalanceData, // Используем последние успешные данные
+                            Positions = null,
+                            ErrorMessage = "Отсутствует подключение!"
+                        });
+                    }
+                    else
+                    {
+                        _onError($"Ошибка: {result.ErrorMessage}");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                _onError($"Общая ошибка: {ex.Message}");
+                // Проверяем, является ли это сетевой ошибкой
+                if (IsNetworkError(ex.Message))
+                {
+                    // Для сетевых ошибок показываем последние успешные данные баланса
+                    _onDataUpdated(new BybitDataResult
+                    {
+                        Success = false,
+                        BalanceData = _lastSuccessfulBalanceData, // Используем последние успешные данные
+                        Positions = null,
+                        ErrorMessage = "Отсутствует подключение!"
+                    });
+                }
+                else
+                {
+                    _onError($"Общая ошибка: {ex.Message}");
+                }
             }
+        }
+
+        private bool IsNetworkError(string? errorMessage)
+        {
+            if (string.IsNullOrEmpty(errorMessage))
+                return false;
+
+            // Сетевые ошибки
+            return errorMessage.Contains("host") ||
+                   errorMessage.Contains("network") ||
+                   errorMessage.Contains("connection") ||
+                   errorMessage.Contains("timeout") ||
+                   errorMessage.Contains("unreachable") ||
+                   errorMessage.Contains("dns") ||
+                   errorMessage.Contains("api.bybit.com");
         }
 
         public void Stop()

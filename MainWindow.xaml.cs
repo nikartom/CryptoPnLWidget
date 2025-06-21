@@ -27,7 +27,7 @@ namespace CryptoPnLWidget
             _sortingManager = new SortingManager();
             _themeManager = new ThemeManager();
             _trayIconManager = new TrayIconManager(this);
-            _uiManager = new UIManager(PositionsPanel, MarginBalanceTextBlock, AvailableBalanceTextBlock, _sortingManager, positionManager, _themeManager);
+            _uiManager = new UIManager(PositionsPanel, MarginBalanceTextBlock, AvailableBalanceTextBlock, ConnectionStatusTextBlock, _sortingManager, positionManager, _themeManager);
             _dataManager = new DataManager(exchangeKeysManager, bybitService, positionManager, OnDataUpdated, OnError);
 
             // Подписка на глобальные ошибки
@@ -129,6 +129,7 @@ namespace CryptoPnLWidget
             AvailableBalanceLabel.Foreground = _themeManager.GetFontColor();
             MarginBalanceTextBlock.Foreground = _themeManager.GetFontColor();
             AvailableBalanceTextBlock.Foreground = _themeManager.GetFontColor();
+            ConnectionStatusTextBlock.Foreground = _themeManager.GetFontColor();
 
             // Обновляем кнопки сортировки
             SymbolSortText.Foreground = _themeManager.GetFontColor();
@@ -199,7 +200,27 @@ namespace CryptoPnLWidget
         {
             Dispatcher.Invoke(() =>
             {
-                _uiManager.UpdateBalanceData(result.BalanceData);
+                if (result.Success)
+                {
+                    _uiManager.UpdateBalanceData(result.BalanceData);
+                    _uiManager.ClearConnectionStatus(); // Очищаем статус подключения при успешной загрузке
+                }
+                else
+                {
+                    // Если это сетевые ошибки, показываем их в отдельной строке
+                    if (result.ErrorMessage == "Отсутствует подключение!")
+                    {
+                        // Показываем последние известные данные баланса (если они есть)
+                        _uiManager.UpdateBalanceData(result.BalanceData);
+                        _uiManager.UpdateBalanceDataWithError(result.ErrorMessage); // Показываем статус подключения
+                    }
+                    else
+                    {
+                        // Для других ошибок используем стандартную обработку
+                        _uiManager.UpdateBalanceData(result.BalanceData);
+                        _uiManager.ClearConnectionStatus();
+                    }
+                }
                 _uiManager.UpdatePositions();
             });
         }

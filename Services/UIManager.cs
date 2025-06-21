@@ -23,6 +23,7 @@ namespace CryptoPnLWidget.Services
         private readonly StackPanel _positionsPanel;
         private readonly TextBlock _marginBalanceTextBlock;
         private readonly TextBlock _availableBalanceTextBlock;
+        private readonly TextBlock _connectionStatusTextBlock;
         private readonly Dictionary<string, Grid> _positionGrids = new Dictionary<string, Grid>();
         private readonly SortingManager _sortingManager;
         private readonly PositionManager _positionManager;
@@ -32,6 +33,7 @@ namespace CryptoPnLWidget.Services
             StackPanel positionsPanel,
             TextBlock marginBalanceTextBlock,
             TextBlock availableBalanceTextBlock,
+            TextBlock connectionStatusTextBlock,
             SortingManager sortingManager,
             PositionManager positionManager,
             ThemeManager themeManager)
@@ -39,6 +41,7 @@ namespace CryptoPnLWidget.Services
             _positionsPanel = positionsPanel;
             _marginBalanceTextBlock = marginBalanceTextBlock;
             _availableBalanceTextBlock = availableBalanceTextBlock;
+            _connectionStatusTextBlock = connectionStatusTextBlock;
             _sortingManager = sortingManager;
             _positionManager = positionManager;
             _themeManager = themeManager;
@@ -61,8 +64,23 @@ namespace CryptoPnLWidget.Services
             }
             else
             {
-                _marginBalanceTextBlock.Text = "💼 Unified Account не найден";
-                _availableBalanceTextBlock.Text = "Проверьте настройки аккаунта";
+                _marginBalanceTextBlock.Text = "Загрузка...";
+                _availableBalanceTextBlock.Text = "";
+            }
+        }
+
+        public void UpdateBalanceDataWithError(string errorMessage)
+        {
+            if (errorMessage == "Отсутствует подключение!")
+            {
+                _connectionStatusTextBlock.Text = "🌐 Отсутствует подключение!";
+                _connectionStatusTextBlock.Visibility = Visibility.Visible;
+                _connectionStatusTextBlock.Foreground = _themeManager.GetErrorColor();
+            }
+            else
+            {
+                _connectionStatusTextBlock.Text = "";
+                _connectionStatusTextBlock.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -356,6 +374,13 @@ namespace CryptoPnLWidget.Services
             {
                 _positionsPanel.Children.Remove(noPositionsMessage);
             }
+        }
+
+        public void ClearConnectionStatus()
+        {
+            _connectionStatusTextBlock.Text = "";
+            _connectionStatusTextBlock.Visibility = Visibility.Collapsed;
+            _connectionStatusTextBlock.Foreground = _themeManager.GetFontColor();
         }
     }
 } 
