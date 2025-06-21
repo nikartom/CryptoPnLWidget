@@ -30,6 +30,9 @@ namespace CryptoPnLWidget
             _uiManager = new UIManager(PositionsPanel, MarginBalanceTextBlock, AvailableBalanceTextBlock, _sortingManager, positionManager, _themeManager);
             _dataManager = new DataManager(exchangeKeysManager, bybitService, positionManager, OnDataUpdated, OnError);
 
+            // Подписка на глобальные ошибки
+            CryptoPnLWidget.Services.UIManager.OnGlobalError += OnError;
+
             // Инициализируем UiConstants с ThemeManager
             UiConstants.Initialize(_themeManager);
 
@@ -64,6 +67,13 @@ namespace CryptoPnLWidget
             _trayIconManager?.Dispose();
             _dataManager?.Stop();
             base.OnClosing(e);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            // Отписка от глобальных ошибок
+            CryptoPnLWidget.Services.UIManager.OnGlobalError -= OnError;
+            base.OnClosed(e);
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -198,8 +208,87 @@ namespace CryptoPnLWidget
         {
             Dispatcher.Invoke(() =>
             {
-                _uiManager.ShowError(errorMessage);
+                // Преобразуем технические ошибки в понятные пользователю сообщения
+                string userFriendlyMessage = ConvertToUserFriendlyMessage(errorMessage);
+                
+                // Определяем, является ли ошибка критической
+                bool isCriticalError = IsCriticalError(errorMessage);
+                
+                // Показываем ошибку в отдельном окне
+                MessageBox.Show(userFriendlyMessage, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                
+                // Если ошибка критическая, закрываем приложение
+                if (isCriticalError)
+                {
+                    // Останавливаем таймер обновления
+                    _dataManager.StopTimer();
+                    Application.Current.Shutdown();
+                }
+                else
+                {
+                    // Очищаем интерфейс от предыдущих ошибок
+                    _uiManager.ClearErrorDisplay();
+                }
             });
+        }
+
+        private bool IsCriticalError(string errorMessage)
+        {
+            if (string.IsNullOrEmpty(errorMessage))
+                return false;
+
+            // Критические ошибки, при которых нужно закрыть приложение
+            return errorMessage.Contains("timestamp") || 
+                   errorMessage.Contains("recv_window") ||
+                   errorMessage.Contains("invalid api") ||
+                   errorMessage.Contains("api key") ||
+                   errorMessage.Contains("permission") ||
+                   errorMessage.Contains("access");
+        }
+
+        private string ConvertToUserFriendlyMessage(string technicalError)
+        {
+            if (string.IsNullOrEmpty(technicalError))
+                return "Произошла неизвестная ошибка";
+
+            // Ошибки связанные с временными метками
+            if (technicalError.Contains("timestamp") || technicalError.Contains("recv_window"))
+            {
+                return "⚠️ Ошибка синхронизации времени\n\nСинхронизируйте время на компьютере и перезапустите приложение.\n\nДля синхронизации времени:\n1. Откройте Параметры Windows\n2. Перейдите в 'Время и язык' → 'Дата и время'\n3. Нажмите 'Синхронизировать сейчас'";
+            }
+
+            // Ошибки API ключей
+            if (technicalError.Contains("invalid api") || technicalError.Contains("api key"))
+            {
+                return "🔑 Неверные API ключи\n\nПроверьте настройки API в меню приложения.";
+            }
+
+            // Ошибки сети
+            if (technicalError.Contains("network") || technicalError.Contains("connection") || technicalError.Contains("timeout"))
+            {
+                return "🌐 Ошибка подключения\n\nПроверьте интернет-соединение и попробуйте снова.";
+            }
+
+            // Ошибки доступа
+            if (technicalError.Contains("permission") || technicalError.Contains("access"))
+            {
+                return "🚫 Ошибка доступа\n\nПроверьте права API ключей на Bybit.";
+            }
+
+            // Ошибки лимитов
+            if (technicalError.Contains("rate limit") || technicalError.Contains("too many requests"))
+            {
+                return "⏱️ Превышен лимит запросов\n\nПодождите немного и попробуйте снова.";
+            }
+
+            // Ошибки аккаунта
+            if (technicalError.Contains("unified account") || technicalError.Contains("account not found"))
+            {
+                return "💼 Unified Account не найден\n\nПроверьте настройки аккаунта на Bybit.";
+            }
+
+            // Общие ошибки
+            return $"❌ Ошибка: {technicalError}";
         }
     }
 }

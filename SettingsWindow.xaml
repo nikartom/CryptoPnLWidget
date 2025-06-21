@@ -1,0 +1,18 @@
+<Window x:Class="CryptoPnLWidget.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Настройки" Height="400" Width="600" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <!-- Меню слева -->
+        <ListBox x:Name="SettingsMenu" Grid.Column="0" SelectionChanged="SettingsMenu_SelectionChanged" SelectedIndex="0">
+            <ListBoxItem Content="API"/>
+            <ListBoxItem Content="Интерфейс"/>
+        </ListBox>
+        <!-- Контент справа -->
+        <ContentControl x:Name="SettingsContent" Grid.Column="1" Margin="10"/>
+    </Grid>
+</Window> 

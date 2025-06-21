@@ -13,6 +13,13 @@ namespace CryptoPnLWidget.Services
 {
     public class UIManager
     {
+        public static event Action<string>? OnGlobalError;
+        
+        public static void RaiseGlobalError(string errorMessage)
+        {
+            OnGlobalError?.Invoke(errorMessage);
+        }
+        
         private readonly StackPanel _positionsPanel;
         private readonly TextBlock _marginBalanceTextBlock;
         private readonly TextBlock _availableBalanceTextBlock;
@@ -48,22 +55,70 @@ namespace CryptoPnLWidget.Services
                 }
                 else
                 {
-                    _marginBalanceTextBlock.Text = "USDT актив не найден.";
-                    _availableBalanceTextBlock.Text = "";
+                    _marginBalanceTextBlock.Text = "💵 USDT актив не найден";
+                    _availableBalanceTextBlock.Text = "Пополните аккаунт USDT";
                 }
             }
             else
             {
-                _marginBalanceTextBlock.Text = "Баланс Unified Account не найден.";
-                _availableBalanceTextBlock.Text = "";
+                _marginBalanceTextBlock.Text = "💼 Unified Account не найден";
+                _availableBalanceTextBlock.Text = "Проверьте настройки аккаунта";
             }
         }
 
         public void ShowError(string errorMessage)
         {
-            _marginBalanceTextBlock.Text = errorMessage;
+            // Преобразуем технические ошибки в понятные пользователю сообщения
+            string userFriendlyMessage = ConvertToUserFriendlyMessage(errorMessage);
+            
+            _marginBalanceTextBlock.Text = userFriendlyMessage;
             _availableBalanceTextBlock.Text = "";
-            ClearPositionsPanelAndShowMessage(errorMessage, Brushes.Red);
+            ClearPositionsPanelAndShowMessage(userFriendlyMessage, Brushes.Red);
+        }
+
+        private string ConvertToUserFriendlyMessage(string technicalError)
+        {
+            if (string.IsNullOrEmpty(technicalError))
+                return "Произошла неизвестная ошибка";
+
+            // Ошибки связанные с временными метками
+            if (technicalError.Contains("timestamp") || technicalError.Contains("recv_window"))
+            {
+                return "⚠️ Ошибка синхронизации времени\nСинхронизируйте время на компьютере\nи перезапустите приложение";
+            }
+
+            // Ошибки API ключей
+            if (technicalError.Contains("invalid api") || technicalError.Contains("api key"))
+            {
+                return "🔑 Неверные API ключи\nПроверьте настройки API в меню";
+            }
+
+            // Ошибки сети
+            if (technicalError.Contains("network") || technicalError.Contains("connection") || technicalError.Contains("timeout"))
+            {
+                return "🌐 Ошибка подключения\nПроверьте интернет-соединение";
+            }
+
+            // Ошибки доступа
+            if (technicalError.Contains("permission") || technicalError.Contains("access"))
+            {
+                return "🚫 Ошибка доступа\nПроверьте права API ключей";
+            }
+
+            // Ошибки лимитов
+            if (technicalError.Contains("rate limit") || technicalError.Contains("too many requests"))
+            {
+                return "⏱️ Превышен лимит запросов\nПодождите немного и попробуйте снова";
+            }
+
+            // Ошибки аккаунта
+            if (technicalError.Contains("unified account") || technicalError.Contains("account not found"))
+            {
+                return "💼 Unified Account не найден\nПроверьте настройки аккаунта на Bybit";
+            }
+
+            // Общие ошибки
+            return $"❌ Ошибка: {technicalError}";
         }
 
         public void UpdatePositions()
@@ -149,7 +204,7 @@ namespace CryptoPnLWidget.Services
                 _positionsPanel.Children.Add(new TextBlock
                 {
                     Name = "NoPositionsMessage",
-                    Text = "Нет открытых позиций.",
+                    Text = "📊 Нет открытых позиций",
                     FontStyle = FontStyles.Italic,
                     Foreground = _themeManager.GetFontColor(),
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -161,7 +216,7 @@ namespace CryptoPnLWidget.Services
         private Grid CreatePositionGridAndChildren()
         {
             Grid positionGrid = new Grid();
-            positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(4, GridUnitType.Star) });
+            positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
@@ -206,7 +261,7 @@ namespace CryptoPnLWidget.Services
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show($"Не удалось открыть ссылку: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                            RaiseGlobalError($"Не удалось открыть ссылку: {ex.Message}");
                         }
                     }
                 }
@@ -287,6 +342,20 @@ namespace CryptoPnLWidget.Services
                 return _themeManager.GetRedColor();   // Отрицательный PnL
             else
                 return _themeManager.GetFontColor(); // Нулевой PnL
+        }
+
+        public void ClearErrorDisplay()
+        {
+            // Очищаем сообщения об ошибках, возвращаем к нормальному состоянию
+            _marginBalanceTextBlock.Text = "Загрузка...";
+            _availableBalanceTextBlock.Text = "";
+            
+            // Очищаем сообщения в панели позиций
+            var noPositionsMessage = _positionsPanel.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Name == "NoPositionsMessage");
+            if (noPositionsMessage != null)
+            {
+                _positionsPanel.Children.Remove(noPositionsMessage);
+            }
         }
     }
 } 

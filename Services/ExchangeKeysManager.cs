@@ -76,7 +76,7 @@ namespace CryptoPnLWidget.Services
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Ошибка при загрузке ключей: {ex.Message}", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                CryptoPnLWidget.Services.UIManager.RaiseGlobalError($"Ошибка при загрузке ключей: {ex.Message}");
                 _exchangeKeys = new Dictionary<string, ExchangeApiKeys>();
             }
         }
@@ -92,7 +92,7 @@ namespace CryptoPnLWidget.Services
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Ошибка при сохранении ключей: {ex.Message}", "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                CryptoPnLWidget.Services.UIManager.RaiseGlobalError($"Ошибка при сохранении ключей: {ex.Message}");
             }
         }
     }

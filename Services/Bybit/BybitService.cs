@@ -29,7 +29,7 @@ namespace CryptoPnLWidget.Services.Bybit
             var walletBalancesResponse = await _bybitRestClient.V5Api.Account.GetBalancesAsync(AccountType.Unified);
             if (walletBalancesResponse.Success)
             {
-                var unifiedAccountBalance = walletBalancesResponse.Data.List.FirstOrDefault();
+                var unifiedAccountBalance = walletBalancesResponse.Data.List?.FirstOrDefault();
                 return unifiedAccountBalance?.TotalMarginBalance;
             }
             return null;
@@ -40,10 +40,10 @@ namespace CryptoPnLWidget.Services.Bybit
             var walletBalancesResponse = await _bybitRestClient.V5Api.Account.GetBalancesAsync(AccountType.Unified);
             if (walletBalancesResponse.Success)
             {
-                var unifiedAccountBalance = walletBalancesResponse.Data.List.FirstOrDefault();
+                var unifiedAccountBalance = walletBalancesResponse.Data.List?.FirstOrDefault();
                 if (unifiedAccountBalance != null)
                 {
-                    var usdtAsset = unifiedAccountBalance.Assets.FirstOrDefault(a => a.Asset == "USDT");
+                    var usdtAsset = unifiedAccountBalance.Assets?.FirstOrDefault(a => a.Asset == "USDT");
                     if (usdtAsset != null)
                     {
                         return usdtAsset.UsdValue - (usdtAsset.TotalOrderInitialMargin + usdtAsset.TotalPositionInitialMargin);
@@ -56,12 +56,14 @@ namespace CryptoPnLWidget.Services.Bybit
         public async Task<BybitBalanceData?> GetBalanceDataAsync()
         {
             var walletBalancesResponse = await _bybitRestClient.V5Api.Account.GetBalancesAsync(AccountType.Unified);
+            
             if (walletBalancesResponse.Success)
             {
-                var unifiedAccountBalance = walletBalancesResponse.Data.List.FirstOrDefault();
+                var unifiedAccountBalance = walletBalancesResponse.Data.List?.FirstOrDefault();
                 if (unifiedAccountBalance != null)
                 {
-                    var usdtAsset = unifiedAccountBalance.Assets.FirstOrDefault(a => a.Asset == "USDT");
+                    var usdtAsset = unifiedAccountBalance.Assets?.FirstOrDefault(a => a.Asset == "USDT");
+                    
                     return new BybitBalanceData
                     {
                         TotalMarginBalance = unifiedAccountBalance.TotalMarginBalance,
@@ -71,8 +73,15 @@ namespace CryptoPnLWidget.Services.Bybit
                         HasUsdtAsset = usdtAsset != null
                     };
                 }
+                else
+                {
+                    return null;
+                }
             }
-            return null;
+            else
+            {
+                throw new Exception(walletBalancesResponse.Error?.Message ?? "Неизвестная ошибка API");
+            }
         }
 
         public async Task<IEnumerable<BybitPosition>?> GetPositionsAsync()
@@ -82,7 +91,10 @@ namespace CryptoPnLWidget.Services.Bybit
             {
                 return positionsResponse.Data.List;
             }
-            return null;
+            else
+            {
+                throw new Exception(positionsResponse.Error?.Message ?? "Неизвестная ошибка API при получении позиций");
+            }
         }
 
         public async Task<BybitDataResult> LoadBybitDataAsync()

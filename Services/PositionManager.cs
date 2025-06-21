@@ -60,7 +60,6 @@ namespace CryptoPnLWidget.Services
             {
                 if (_positionTrackers.TryRemove(symbol, out var _))
                 {
-                    Console.WriteLine($"Position {symbol} removed from tracker as it's no longer active.");
                     _hasChanges = true;
                 }
             }
@@ -104,7 +103,6 @@ namespace CryptoPnLWidget.Services
 
                 var jsonString = JsonSerializer.Serialize(dataToSave, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(_pnlHistoryFilePath, jsonString);
-                Console.WriteLine($"PnL history saved to {_pnlHistoryFilePath}");
             }
             catch (Exception ex)
             {
@@ -118,7 +116,6 @@ namespace CryptoPnLWidget.Services
         {
             if (!File.Exists(_pnlHistoryFilePath))
             {
-                Console.WriteLine("PnL history file not found. Starting with empty history.");
                 return;
             }
 
@@ -143,7 +140,6 @@ namespace CryptoPnLWidget.Services
                             tracker.CleanOldHistory(); // Очищаем старые записи при загрузке на случай, если файл не чистился долго
                         }
                     }
-                    Console.WriteLine($"PnL history loaded from {_pnlHistoryFilePath}");
                 }
             }
             catch (JsonException ex)

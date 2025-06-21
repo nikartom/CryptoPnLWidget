@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Windows.Threading;
 using CryptoPnLWidget.Services.Bybit;
 using CryptoPnLWidget.API;
+using System.Linq;
 
 namespace CryptoPnLWidget.Services
 {
@@ -100,6 +101,11 @@ namespace CryptoPnLWidget.Services
         }
 
         public void Stop()
+        {
+            _updateTimer.Stop();
+        }
+
+        public void StopTimer()
         {
             _updateTimer.Stop();
         }

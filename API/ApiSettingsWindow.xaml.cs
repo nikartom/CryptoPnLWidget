@@ -77,7 +77,7 @@ namespace CryptoPnLWidget.API
                 }
                 catch (System.Exception ex)
                 {
-                    MessageBox.Show($"Ошибка при сохранении ключей: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    CryptoPnLWidget.Services.UIManager.RaiseGlobalError($"Ошибка при сохранении ключей: {ex.Message}");
                 }
             }
             else

@@ -34,7 +34,7 @@ namespace CryptoPnLWidget.Services
             catch (Exception ex)
             {
                 _trayIcon.Icon = SystemIcons.Application;
-                System.Windows.Forms.MessageBox.Show($"Ошибка при загрузке иконки: {ex.Message}. Используется стандартная иконка.", "Ошибка иконки", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                CryptoPnLWidget.Services.UIManager.RaiseGlobalError($"Ошибка при загрузке иконки: {ex.Message}. Используется стандартная иконка.");
             }
 
             _trayIcon.Text = "Crypto PnL Widget";
@@ -42,14 +42,26 @@ namespace CryptoPnLWidget.Services
 
             // Create context menu
             var contextMenu = new ContextMenuStrip();
+            var settingsItem = new ToolStripMenuItem("Настройки");
+            settingsItem.Click += (s, e) =>
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var settingsWindow = new SettingsWindow();
+                    settingsWindow.Owner = _mainWindow;
+                    settingsWindow.ShowDialog();
+                });
+            };
+            contextMenu.Items.Add(settingsItem);
+
             var exitItem = new ToolStripMenuItem("Выход");
             exitItem.Click += (s, e) =>
             {
                 _trayIcon.Visible = false;
                 System.Windows.Application.Current.Shutdown();
             };
-
             contextMenu.Items.Add(exitItem);
+
             _trayIcon.ContextMenuStrip = contextMenu;
 
             // Handle single click on tray icon
