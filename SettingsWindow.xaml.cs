@@ -37,6 +37,10 @@ namespace CryptoPnLWidget
             {
                 ShowInterfaceSettings();
             }
+            else if (SettingsMenu.SelectedIndex == 2)
+            {
+                ShowSupportSection();
+            }
         }
 
         private void ShowApiSettings()
@@ -587,6 +591,73 @@ namespace CryptoPnLWidget
             panel.Children.Add(colorButton);
 
             return panel;
+        }
+
+        private void ShowSupportSection()
+        {
+            if (SettingsContent == null) return;
+
+            var panel = new StackPanel { Margin = new Thickness(30, 20, 0, 0) };
+
+            // Email
+            var emailBlock = new TextBlock
+            {
+                Text = "pndmasterbot@gmail.com",
+                FontWeight = FontWeights.Bold,
+                FontSize = 16,
+                Margin = new Thickness(0, 0, 0, 18)
+            };
+            panel.Children.Add(emailBlock);
+
+            // GitHub
+            var githubBlock = new TextBlock
+            {
+                Text = "GitHub: https://github.com/nikartom/CryptoPnLWidget",
+                Foreground = Brushes.SteelBlue,
+                Cursor = Cursors.Hand,
+                Margin = new Thickness(0, 0, 0, 10),
+                TextDecorations = TextDecorations.Underline
+            };
+            githubBlock.MouseLeftButtonUp += (s, e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "https://github.com/nikartom/CryptoPnLWidget",
+                UseShellExecute = true
+            });
+            panel.Children.Add(githubBlock);
+
+            // Telegram
+            var tgBlock = new TextBlock
+            {
+                Text = "Telegram-бот: https://t.me/PumpDumpMaster_bot",
+                Foreground = Brushes.SteelBlue,
+                Cursor = Cursors.Hand,
+                Margin = new Thickness(0, 0, 0, 10),
+                TextDecorations = TextDecorations.Underline
+            };
+            tgBlock.MouseLeftButtonUp += (s, e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "https://t.me/PumpDumpMaster_bot",
+                UseShellExecute = true
+            });
+            panel.Children.Add(tgBlock);
+
+            // Charts site
+            var chartsBlock = new TextBlock
+            {
+                Text = "Графики: https://bybitcharts.pro/",
+                Foreground = Brushes.SteelBlue,
+                Cursor = Cursors.Hand,
+                Margin = new Thickness(0, 0, 0, 10),
+                TextDecorations = TextDecorations.Underline
+            };
+            chartsBlock.MouseLeftButtonUp += (s, e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "https://bybitcharts.pro/",
+                UseShellExecute = true
+            });
+            panel.Children.Add(chartsBlock);
+
+            SettingsContent.Content = panel;
         }
     }
 } 

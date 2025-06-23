@@ -11,6 +11,7 @@
         <ListBox x:Name="SettingsMenu" Grid.Column="0" SelectionChanged="SettingsMenu_SelectionChanged" SelectedIndex="0">
             <ListBoxItem Content="API"/>
             <ListBoxItem Content="Интерфейс"/>
+            <ListBoxItem Content="Поддержка"/>
         </ListBox>
         <!-- Контент справа -->
         <ContentControl x:Name="SettingsContent" Grid.Column="1" Margin="10"/>
