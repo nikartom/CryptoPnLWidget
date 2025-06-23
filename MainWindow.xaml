@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Crypto PnL Widget" Height="450" Width="350"
+        Title="Crypto PnL Widget" Height="450" Width="450"
         MinWidth="300"
         SizeToContent="Height"
         WindowStyle="None"
@@ -53,6 +53,7 @@
                         <ColumnDefinition Width="1.5*"/>
                         <ColumnDefinition Width="1.5*"/>
                         <ColumnDefinition Width="1.5*"/>
+                        <ColumnDefinition Width="1*"/>
                     </Grid.ColumnDefinitions>
                     <Button x:Name="SymbolSortButton" Grid.Column="0" Click="ColumnHeader_Click" Tag="Symbol" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Background="Transparent" BorderThickness="0">
                         <StackPanel Orientation="Horizontal">
@@ -89,6 +90,9 @@
                             <TextBlock x:Name="RealizedSortText" Text="Фикс" FontWeight="Bold" Foreground="White"/>
                             <TextBlock x:Name="RealizedSortIndicator" Text="▼" Margin="5,0,0,0" Foreground="White" Visibility="Collapsed"/>
                         </StackPanel>
+                    </Button>
+                    <Button x:Name="HoldSortButton" Grid.Column="6" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Background="Transparent" BorderThickness="0">
+                        <TextBlock x:Name="HoldSortText" Text="Hold" FontWeight="Bold" Foreground="White"/>
                     </Button>
                 </Grid>
 

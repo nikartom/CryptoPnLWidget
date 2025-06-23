@@ -16,10 +16,13 @@ namespace CryptoPnLWidget.Services
 
         // Константы для пути к файлу истории PnL
         private const string PnlHistoryFileName = "pnl_history.json";
+        private const string HoldPositionsFileName = "hold_positions.json";
         private readonly string _pnlHistoryFilePath;
+        private readonly string _holdPositionsFilePath;
         private DateTime _lastSaveTime = DateTime.MinValue;
         private const int SaveIntervalMinutes = 5; // Save every 5 minutes
         private bool _hasChanges = false;
+        private bool _hasHoldChanges = false;
 
         public PositionManager()
         {
@@ -30,8 +33,10 @@ namespace CryptoPnLWidget.Services
             string? appSpecificFolder = Path.Combine(appDataFolder, "CryptoPnLWidget"); // Та же папка, что и для API ключей
             Directory.CreateDirectory(appSpecificFolder); // Убедимся, что папка существует
             _pnlHistoryFilePath = Path.Combine(appSpecificFolder, PnlHistoryFileName);
+            _holdPositionsFilePath = Path.Combine(appSpecificFolder, HoldPositionsFileName);
 
             LoadHistory(); // <--- Загружаем историю при создании менеджера
+            LoadHoldPositions(); // <--- Загружаем состояние галочек
         }
 
         // Обновляет или добавляет позиции и их PnL историю
@@ -76,11 +81,37 @@ namespace CryptoPnLWidget.Services
                 _lastSaveTime = DateTime.Now;
                 _hasChanges = false;
             }
+
+            // Save hold positions if there are changes
+            if (_hasHoldChanges)
+            {
+                SaveHoldPositions();
+                _hasHoldChanges = false;
+            }
         }
 
         public IEnumerable<PositionHistoryTracker> GetActivePositionTrackers()
         {
             return _positionTrackers.Values.Where(t => t.CurrentPosition?.Quantity != 0);
+        }
+
+        public IEnumerable<PositionHistoryTracker> GetShortTermPositions()
+        {
+            return GetActivePositionTrackers().Where(t => !t.IsHold);
+        }
+
+        public IEnumerable<PositionHistoryTracker> GetLongTermPositions()
+        {
+            return GetActivePositionTrackers().Where(t => t.IsHold);
+        }
+
+        public void SetHoldPosition(string symbol, bool isHold)
+        {
+            if (_positionTrackers.TryGetValue(symbol, out var tracker))
+            {
+                tracker.IsHold = isHold;
+                _hasHoldChanges = true;
+            }
         }
 
         // --- НОВЫЙ МЕТОД: Сохранение истории PnL ---
@@ -154,10 +185,61 @@ namespace CryptoPnLWidget.Services
             }
         }
 
+        // --- НОВЫЕ МЕТОДЫ: Сохранение и загрузка состояния галочек ---
+        private void SaveHoldPositions()
+        {
+            try
+            {
+                var holdPositions = _positionTrackers.Values
+                    .Where(t => t.IsHold)
+                    .Select(t => t.Symbol)
+                    .ToList();
+
+                var jsonString = JsonSerializer.Serialize(holdPositions, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(_holdPositionsFilePath, jsonString);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving hold positions: {ex.Message}");
+            }
+        }
+
+        private void LoadHoldPositions()
+        {
+            if (!File.Exists(_holdPositionsFilePath))
+            {
+                return;
+            }
+
+            try
+            {
+                var jsonString = File.ReadAllText(_holdPositionsFilePath);
+                var holdPositions = JsonSerializer.Deserialize<List<string>>(jsonString);
+
+                if (holdPositions != null)
+                {
+                    foreach (var symbol in holdPositions)
+                    {
+                        var tracker = _positionTrackers.GetOrAdd(symbol, newSymbol => new PositionHistoryTracker(newSymbol));
+                        tracker.IsHold = true;
+                    }
+                }
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"Error parsing hold positions file (JSON error): {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading hold positions: {ex.Message}");
+            }
+        }
+
         public class PositionHistoryTracker
         {
             public string Symbol { get; private set; }
             public BybitPosition? CurrentPosition { get; private set; }
+            public bool IsHold { get; set; } = false; // <--- НОВОЕ ПОЛЕ для галочки
             // Поле должно быть публичным или иметь getter для сериализации, если вы решите сериализовать tracker целиком
             // Сейчас оно остается private, потому что мы сериализуем Dictionary<string, List<PositionPnlHistoryEntry>>
             // Но для CleanOldHistory() и AddPnlHistoryEntry() оно должно быть доступно

@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Input;
+using System.Windows.Threading;
 using CryptoPnLWidget.Services;
 using CryptoPnLWidget.Services.Bybit;
 
@@ -53,8 +54,8 @@ namespace CryptoPnLWidget.Services
             {
                 if (balanceData.HasUsdtAsset)
                 {
-                    _marginBalanceTextBlock.Text = balanceData.TotalMarginBalance?.ToString("F2") + " USDT";
-                    _availableBalanceTextBlock.Text = balanceData.AvailableBalance?.ToString("F2") + " USD";
+                    _marginBalanceTextBlock.Text = balanceData.TotalMarginBalance?.ToString("F2");
+                    _availableBalanceTextBlock.Text = balanceData.AvailableBalance?.ToString("F2");
                 }
                 else
                 {
@@ -141,17 +142,27 @@ namespace CryptoPnLWidget.Services
 
         public void UpdatePositions()
         {
-            var sortedTrackers = _sortingManager.SortPositions(_positionManager.GetActivePositionTrackers());
-            UpdatePositionsPanel(sortedTrackers);
+            try
+            {
+                var shortTermPositions = _positionManager.GetShortTermPositions().ToList();
+                var longTermPositions = _positionManager.GetLongTermPositions().ToList();
+
+                var sortedShortTerm = _sortingManager.SortPositions(shortTermPositions);
+                var sortedLongTerm = _sortingManager.SortPositions(longTermPositions);
+
+                UpdatePositionsPanel(sortedShortTerm, sortedLongTerm);
+            }
+            catch (Exception ex)
+            {
+                ClearPositionsPanelAndShowMessage($"Ошибка при обновлении позиций: {ConvertToUserFriendlyMessage(ex.Message)}", _themeManager.GetRedColor());
+            }
         }
 
         private void ClearPositionsPanelAndShowMessage(string message, Brush color)
         {
             _positionsPanel.Children.Clear();
-            _positionGrids.Clear();
             _positionsPanel.Children.Add(new TextBlock
             {
-                Name = "NoPositionsMessage",
                 Text = message,
                 FontStyle = FontStyles.Italic,
                 Foreground = color,
@@ -160,55 +171,69 @@ namespace CryptoPnLWidget.Services
             });
         }
 
-        private void UpdatePositionsPanel(List<PositionManager.PositionHistoryTracker> sortedTrackers)
+        private void UpdatePositionsPanel(List<PositionManager.PositionHistoryTracker> sortedShortTerm, List<PositionManager.PositionHistoryTracker> sortedLongTerm)
         {
-            var noPositionsMessage = _positionsPanel.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Name == "NoPositionsMessage");
-            if (noPositionsMessage != null)
-            {
-                _positionsPanel.Children.Remove(noPositionsMessage);
-            }
-
-            HashSet<string> symbolsToDisplay = new HashSet<string>();
-            foreach (var tracker in sortedTrackers)
-            {
-                if (tracker.CurrentPosition?.Symbol != null)
-                {
-                    symbolsToDisplay.Add(tracker.CurrentPosition.Symbol);
-                }
-            }
-
-            List<string> symbolsToRemove = new List<string>();
-            foreach (var symbolInUi in _positionGrids.Keys)
-            {
-                if (!symbolsToDisplay.Contains(symbolInUi))
-                {
-                    if (_positionGrids.TryGetValue(symbolInUi, out Grid? gridToRemove))
-                    {
-                        _positionsPanel.Children.Remove(gridToRemove);
-                        symbolsToRemove.Add(symbolInUi);
-                    }
-                }
-            }
+            // Очищаем старые Grid'ы, которые больше не используются
+            var currentSymbols = sortedShortTerm.Concat(sortedLongTerm).Select(t => t.CurrentPosition?.Symbol).Where(s => !string.IsNullOrEmpty(s)).ToHashSet();
+            var symbolsToRemove = _positionGrids.Keys.Except(currentSymbols).ToList();
             foreach (var symbol in symbolsToRemove)
             {
-                _positionGrids.Remove(symbol);
+                if (!string.IsNullOrEmpty(symbol))
+                {
+                    _positionGrids.Remove(symbol);
+                }
             }
 
             List<UIElement> newChildrenOrder = new List<UIElement>();
-            foreach (var tracker in sortedTrackers)
+
+            // Добавляем заголовок для краткосрочных позиций
+            if (sortedShortTerm.Any())
             {
-                var position = tracker.CurrentPosition;
-                if (position == null || string.IsNullOrEmpty(position.Symbol)) continue;
-
-                Grid? positionGrid;
-                if (!_positionGrids.TryGetValue(position.Symbol, out positionGrid))
+                newChildrenOrder.Add(CreateSectionHeader("Краткосрочные позиции"));
+                
+                foreach (var tracker in sortedShortTerm)
                 {
-                    positionGrid = CreatePositionGridAndChildren();
-                    _positionGrids[position.Symbol] = positionGrid;
-                }
-                newChildrenOrder.Add(positionGrid);
+                    var position = tracker.CurrentPosition;
+                    if (position == null || string.IsNullOrEmpty(position.Symbol)) continue;
 
-                UpdatePositionGridContent(positionGrid, tracker);
+                    Grid? positionGrid;
+                    if (!_positionGrids.TryGetValue(position.Symbol, out positionGrid))
+                    {
+                        positionGrid = CreatePositionGridAndChildren();
+                        _positionGrids[position.Symbol] = positionGrid;
+                    }
+                    newChildrenOrder.Add(positionGrid);
+
+                    UpdatePositionGridContent(positionGrid, tracker);
+                }
+
+                // Добавляем итоговую строку для краткосрочных позиций
+                newChildrenOrder.Add(CreateTotalRow(sortedShortTerm));
+            }
+
+            // Добавляем заголовок для долгосрочных позиций
+            if (sortedLongTerm.Any())
+            {
+                newChildrenOrder.Add(CreateSectionHeader("Долгосрочные позиции"));
+                
+                foreach (var tracker in sortedLongTerm)
+                {
+                    var position = tracker.CurrentPosition;
+                    if (position == null || string.IsNullOrEmpty(position.Symbol)) continue;
+
+                    Grid? positionGrid;
+                    if (!_positionGrids.TryGetValue(position.Symbol, out positionGrid))
+                    {
+                        positionGrid = CreatePositionGridAndChildren();
+                        _positionGrids[position.Symbol] = positionGrid;
+                    }
+                    newChildrenOrder.Add(positionGrid);
+
+                    UpdatePositionGridContent(positionGrid, tracker);
+                }
+
+                // Добавляем итоговую строку для долгосрочных позиций
+                newChildrenOrder.Add(CreateTotalRow(sortedLongTerm));
             }
 
             _positionsPanel.Children.Clear();
@@ -217,7 +242,7 @@ namespace CryptoPnLWidget.Services
                 _positionsPanel.Children.Add(child);
             }
 
-            if (!sortedTrackers.Any() && !_positionGrids.Any())
+            if (!sortedShortTerm.Any() && !sortedLongTerm.Any() && !_positionGrids.Any())
             {
                 _positionsPanel.Children.Add(new TextBlock
                 {
@@ -231,6 +256,19 @@ namespace CryptoPnLWidget.Services
             }
         }
 
+        private TextBlock CreateSectionHeader(string title)
+        {
+            return new TextBlock
+            {
+                Text = title,
+                FontWeight = FontWeights.Bold,
+                FontSize = _themeManager.GetContentFontSize() + 1,
+                Foreground = _themeManager.GetFontColor(),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 15, 0, 5)
+            };
+        }
+
         private Grid CreatePositionGridAndChildren()
         {
             Grid positionGrid = new Grid();
@@ -240,6 +278,7 @@ namespace CryptoPnLWidget.Services
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
             positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
+            positionGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             positionGrid.Margin = new Thickness(0, 3, 0, 3);
 
             positionGrid.MouseLeftButtonDown += PositionRow_MouseLeftButtonDown;
@@ -252,14 +291,40 @@ namespace CryptoPnLWidget.Services
             positionGrid.Children.Add(new TextBlock { Tag = "Pnl1h", Foreground = _themeManager.GetFontColor(), HorizontalAlignment = HorizontalAlignment.Center });
             positionGrid.Children.Add(new TextBlock { Tag = "Pnl24h", Foreground = _themeManager.GetFontColor(), HorizontalAlignment = HorizontalAlignment.Center });
             positionGrid.Children.Add(new TextBlock { Tag = "Realized", Foreground = _themeManager.GetFontColor(), HorizontalAlignment = HorizontalAlignment.Center });
+            
+            // Создаем CheckBox для Hold
+            var holdCheckBox = new CheckBox
+            {
+                Tag = "Hold",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            holdCheckBox.Checked += HoldCheckBox_Changed;
+            holdCheckBox.Unchecked += HoldCheckBox_Changed;
+            positionGrid.Children.Add(holdCheckBox);
 
-            // Устанавливаем Column для каждого TextBlock
+            // Устанавливаем Column для каждого элемента
             for (int i = 0; i < positionGrid.Children.Count; i++)
             {
                 Grid.SetColumn(positionGrid.Children[i], i);
             }
 
             return positionGrid;
+        }
+
+        private void HoldCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox && checkBox.Parent is Grid positionGrid && positionGrid.Tag is PositionManager.PositionHistoryTracker tracker)
+            {
+                var symbol = tracker.CurrentPosition?.Symbol;
+                if (!string.IsNullOrEmpty(symbol))
+                {
+                    _positionManager.SetHoldPosition(symbol, checkBox.IsChecked ?? false);
+                    
+                    // Немедленно обновляем UI для отображения изменений
+                    UpdatePositions();
+                }
+            }
         }
 
         private void PositionRow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -298,6 +363,7 @@ namespace CryptoPnLWidget.Services
             var pnl1hBlock = positionGrid.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Tag?.ToString() == "Pnl1h");
             var pnl24hBlock = positionGrid.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Tag?.ToString() == "Pnl24h");
             var realizedPnlBlock = positionGrid.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Tag?.ToString() == "Realized");
+            var holdCheckBox = positionGrid.Children.OfType<CheckBox>().FirstOrDefault(cb => cb.Tag?.ToString() == "Hold");
 
             if (symbolBlock != null)
             {
@@ -352,6 +418,11 @@ namespace CryptoPnLWidget.Services
                 realizedPnlBlock.Foreground = GetPnlColor(position?.RealizedPnl);
                 realizedPnlBlock.FontSize = _themeManager.GetContentFontSize();
             }
+
+            if (holdCheckBox != null)
+            {
+                holdCheckBox.IsChecked = tracker.IsHold;
+            }
         }
 
         private Brush GetPnlColor(decimal? pnlValue)
@@ -365,6 +436,86 @@ namespace CryptoPnLWidget.Services
                 return _themeManager.GetRedColor();   // Отрицательный PnL
             else
                 return _themeManager.GetFontColor(); // Нулевой PnL
+        }
+
+        private Grid CreateTotalRow(List<PositionManager.PositionHistoryTracker> positions)
+        {
+            Grid totalGrid = new Grid();
+            totalGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
+            totalGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
+            totalGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
+            totalGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
+            totalGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
+            totalGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
+            totalGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            totalGrid.Margin = new Thickness(0, 8, 0, 8);
+
+            // Вычисляем сумму только PnL
+            decimal totalPnl = 0;
+
+            foreach (var tracker in positions)
+            {
+                if (tracker.CurrentPosition?.UnrealizedPnl.HasValue == true)
+                {
+                    totalPnl += tracker.CurrentPosition.UnrealizedPnl.Value;
+                }
+            }
+
+            // Создаем элементы строки
+            totalGrid.Children.Add(new TextBlock 
+            { 
+                Text = "Итого", 
+                FontWeight = FontWeights.Bold,
+                FontSize = _themeManager.GetContentFontSize(),
+                Foreground = _themeManager.GetFontColor(), 
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(5, 0, 0, 0)
+            });
+            
+            totalGrid.Children.Add(new TextBlock 
+            { 
+                Text = "", 
+                Foreground = _themeManager.GetFontColor(), 
+                HorizontalAlignment = HorizontalAlignment.Center 
+            });
+            
+            totalGrid.Children.Add(new TextBlock 
+            { 
+                Text = totalPnl.ToString("F2"), 
+                FontWeight = FontWeights.Bold,
+                FontSize = _themeManager.GetContentFontSize(),
+                Foreground = GetPnlColor(totalPnl), 
+                HorizontalAlignment = HorizontalAlignment.Center 
+            });
+            
+            totalGrid.Children.Add(new TextBlock 
+            { 
+                Text = "", 
+                Foreground = _themeManager.GetFontColor(), 
+                HorizontalAlignment = HorizontalAlignment.Center 
+            });
+            
+            totalGrid.Children.Add(new TextBlock 
+            { 
+                Text = "", 
+                Foreground = _themeManager.GetFontColor(), 
+                HorizontalAlignment = HorizontalAlignment.Center 
+            });
+            
+            totalGrid.Children.Add(new TextBlock 
+            { 
+                Text = "", 
+                Foreground = _themeManager.GetFontColor(), 
+                HorizontalAlignment = HorizontalAlignment.Center 
+            });
+
+            // Устанавливаем Column для каждого элемента
+            for (int i = 0; i < totalGrid.Children.Count; i++)
+            {
+                Grid.SetColumn(totalGrid.Children[i], i);
+            }
+
+            return totalGrid;
         }
 
         public void ClearErrorDisplay()

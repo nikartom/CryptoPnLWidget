@@ -146,6 +146,7 @@ namespace CryptoPnLWidget
             Pnl1hSortText.Foreground = _themeManager.GetFontColor();
             Pnl24hSortText.Foreground = _themeManager.GetFontColor();
             RealizedSortText.Foreground = _themeManager.GetFontColor();
+            HoldSortText.Foreground = _themeManager.GetFontColor();
 
             // Обновляем размеры шрифтов кнопок сортировки
             SymbolSortText.FontSize = UiConstants.FontSizeMedium;
@@ -154,6 +155,7 @@ namespace CryptoPnLWidget
             Pnl1hSortText.FontSize = UiConstants.FontSizeMedium;
             Pnl24hSortText.FontSize = UiConstants.FontSizeMedium;
             RealizedSortText.FontSize = UiConstants.FontSizeMedium;
+            HoldSortText.FontSize = UiConstants.FontSizeMedium;
 
             // Обновляем индикаторы сортировки
             SymbolSortIndicator.Foreground = _themeManager.GetFontColor();
