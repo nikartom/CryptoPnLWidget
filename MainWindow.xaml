@@ -15,8 +15,36 @@
         Topmost="True"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
     
+    <Window.Resources>
+        <Style x:Key="WindowControlButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" BorderBrush="Transparent" BorderThickness="0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Border x:Name="MainBorder" CornerRadius="10" Background="#80000000" BorderBrush="DarkGray" BorderThickness="1">
         <Grid>
+            <!-- Кнопки управления окном -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,2,0" Panel.ZIndex="100" >
+                <Button x:Name="MinimizeButton" Style="{StaticResource WindowControlButton}" Content="_" Click="MinimizeButton_Click" ToolTip="Свернуть"/>
+                <Button x:Name="CloseButton" Style="{StaticResource WindowControlButton}" Content="x" Click="CloseButton_Click" ToolTip="Закрыть"/>
+            </StackPanel>
             <StackPanel Margin="15">
                 <Grid Margin="0,0,0,15">
                     <Grid.ColumnDefinitions>

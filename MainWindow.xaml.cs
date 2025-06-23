@@ -43,6 +43,7 @@ namespace CryptoPnLWidget
             this.Loaded += MainWindow_Loaded;
             InitializeSortIndicators();
             ApplyCurrentTheme();
+            this.MouseRightButtonUp += MainWindow_MouseRightButtonUp;
         }
 
         private void InitializeSortIndicators()
@@ -328,6 +329,31 @@ namespace CryptoPnLWidget
 
             // Общие ошибки
             return $"❌ Ошибка: {technicalError}";
+        }
+
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+
+        private void MainWindow_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            var contextMenu = new ContextMenu();
+            var settingsItem = new MenuItem { Header = "Настройки" };
+            settingsItem.Click += (s, args) =>
+            {
+                // Открываем окно настроек
+                var settingsWindow = new SettingsWindow(_themeManager);
+                settingsWindow.Owner = this;
+                settingsWindow.ShowDialog();
+            };
+            contextMenu.Items.Add(settingsItem);
+            contextMenu.IsOpen = true;
         }
     }
 }
