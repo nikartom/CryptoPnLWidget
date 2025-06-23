@@ -351,6 +351,25 @@ namespace CryptoPnLWidget.Services
             }
         }
 
+        private string FormatPnl(decimal? pnlValue)
+        {
+            if (!pnlValue.HasValue)
+                return "N/A";
+
+            var absValue = Math.Abs(pnlValue.Value);
+            
+            // Если значение больше или равно 100, показываем только целые числа
+            if (absValue >= 100)
+            {
+                return pnlValue.Value.ToString("F0");
+            }
+            else
+            {
+                // Для значений меньше 100 показываем с центами
+                return pnlValue.Value.ToString("F2");
+            }
+        }
+
         private void UpdatePositionGridContent(Grid positionGrid, PositionManager.PositionHistoryTracker tracker)
         {
             var position = tracker.CurrentPosition;
@@ -390,7 +409,7 @@ namespace CryptoPnLWidget.Services
 
             if (position != null && pnlBlock != null)
             {
-                pnlBlock.Text = position.UnrealizedPnl?.ToString("F2") ?? "N/A";
+                pnlBlock.Text = FormatPnl(position.UnrealizedPnl);
                 pnlBlock.Foreground = GetPnlColor(position.UnrealizedPnl);
                 pnlBlock.FontWeight = FontWeights.Bold;
                 pnlBlock.FontSize = _themeManager.GetContentFontSize();
@@ -399,7 +418,7 @@ namespace CryptoPnLWidget.Services
             if (pnl1hBlock != null)
             {
                 decimal? pnl1hChange = tracker.GetPnlChange(TimeSpan.FromHours(1), tracker.GetCurrentPosition());
-                pnl1hBlock.Text = pnl1hChange?.ToString("F2") ?? "N/A";
+                pnl1hBlock.Text = FormatPnl(pnl1hChange);
                 pnl1hBlock.Foreground = GetPnlColor(pnl1hChange);
                 pnl1hBlock.FontSize = _themeManager.GetContentFontSize();
             }
@@ -407,14 +426,14 @@ namespace CryptoPnLWidget.Services
             if (pnl24hBlock != null)
             {
                 decimal? pnl24hChange = tracker.GetPnlChange(TimeSpan.FromHours(24), tracker.GetCurrentPosition());
-                pnl24hBlock.Text = pnl24hChange?.ToString("F2") ?? "N/A";
+                pnl24hBlock.Text = FormatPnl(pnl24hChange);
                 pnl24hBlock.Foreground = GetPnlColor(pnl24hChange);
                 pnl24hBlock.FontSize = _themeManager.GetContentFontSize();
             }
 
             if (realizedPnlBlock != null)
             {
-                realizedPnlBlock.Text = position?.RealizedPnl?.ToString("F2") ?? "N/A";
+                realizedPnlBlock.Text = FormatPnl(position?.RealizedPnl);
                 realizedPnlBlock.Foreground = GetPnlColor(position?.RealizedPnl);
                 realizedPnlBlock.FontSize = _themeManager.GetContentFontSize();
             }
@@ -481,7 +500,7 @@ namespace CryptoPnLWidget.Services
             
             totalGrid.Children.Add(new TextBlock 
             { 
-                Text = totalPnl.ToString("F2"), 
+                Text = FormatPnl(totalPnl), 
                 FontWeight = FontWeights.Bold,
                 FontSize = _themeManager.GetContentFontSize(),
                 Foreground = GetPnlColor(totalPnl), 
