@@ -262,7 +262,7 @@ namespace CryptoPnLWidget.Services
             {
                 Text = title,
                 FontWeight = FontWeights.Bold,
-                FontSize = _themeManager.GetContentFontSize() + 1,
+                FontSize = _themeManager.GetHeaderFontSize(),
                 Foreground = _themeManager.GetFontColor(),
                 HorizontalAlignment = HorizontalAlignment.Left,
                 Margin = new Thickness(0, 15, 0, 5)
